@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>まるばつゲーム</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --line: #475569;
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --circle: #38bdf8;
+      --cross: #fb7185;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(circle at top, #263b68, var(--bg) 60%);
+      color: var(--text);
+    }
+
+    .container {
+      width: min(92vw, 520px);
+      padding: 36px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      background: rgba(30, 41, 59, 0.92);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+      text-align: center;
+    }
+
+    h1 { margin: 0 0 12px; font-size: clamp(2rem, 8vw, 3.5rem); }
+    h2 { min-height: 1.5em; margin: 0 0 24px; font-size: 1.25rem; }
+    p { margin: 0 0 28px; color: var(--muted); }
+    .screen[hidden] { display: none; }
+
+    .menu { display: grid; gap: 14px; }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 20px;
+      background: #0ea5e9;
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    button:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: min(100%, 390px);
+      margin: 0 auto 24px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      padding: 0;
+      border: 2px solid var(--line);
+      border-radius: 16px;
+      background: #0f172a;
+      font-size: clamp(3rem, 15vw, 5rem);
+      line-height: 1;
+    }
+
+    .cell:hover:empty { background: #172554; }
+    .cell.circle { color: var(--circle); }
+    .cell.cross { color: var(--cross); }
+    .cell.winner { background: #365314; border-color: #a3e635; }
+    .cell:disabled { cursor: default; transform: none; filter: none; }
+    #back-button { background: #64748b; }
+
+    @media (max-width: 450px) {
+      .container { padding: 26px 18px; }
+      .board { gap: 7px; }
+      .cell { border-radius: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section id="title-screen" class="screen">
+      <h1>○ × GAME</h1>
+      <p>対戦モードを選んでください</p>
+      <div class="menu">
+        <button type="button" data-mode="cpu">CPUと対戦</button>
+        <button type="button" data-mode="player">プレイヤー2人で対戦</button>
+      </div>
+    </section>
+
+    <section id="game-screen" class="screen" hidden>
+      <h2 id="status" aria-live="polite"></h2>
+      <div id="board" class="board" role="grid" aria-label="三目並べの盤面"></div>
+      <button id="back-button" type="button" hidden>タイトル画面に戻る</button>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
