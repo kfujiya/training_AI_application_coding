@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>長崎県大村市の紹介</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4efe6;
+      --surface: rgba(255, 255, 255, 0.72);
+      --surface-strong: #ffffff;
+      --text: #263041;
+      --muted: #5d6878;
+      --accent: #0f766e;
+      --accent-2: #c85c2d;
+      --accent-3: #7a4d14;
+      --border: rgba(38, 48, 65, 0.10);
+      --shadow: 0 24px 60px rgba(38, 48, 65, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 35%),
+        radial-gradient(circle at top right, rgba(200, 92, 45, 0.14), transparent 32%),
+        linear-gradient(180deg, #fbf8f2 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.66));
+      box-shadow: var(--shadow);
+      padding: 28px;
+      isolation: isolate;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .hero::before {
+      inset: auto auto -50px -20px;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(15, 118, 110, 0.18), transparent 72%);
+    }
+
+    .hero::after {
+      inset: -40px -20px auto auto;
+      width: 260px;
+      height: 260px;
+      background: radial-gradient(circle, rgba(200, 92, 45, 0.16), transparent 72%);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.10);
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav a:hover {
+      color: var(--accent);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.25fr 0.95fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: clamp(2.4rem, 5vw, 4.6rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .lead {
+      max-width: 36rem;
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.95;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 16px 30px rgba(15, 118, 110, 0.24);
+    }
+
+    .button.secondary {
+      background: rgba(255, 255, 255, 0.72);
+      border-color: rgba(38, 48, 65, 0.10);
+      color: var(--text);
+    }
+
+    .panel,
+    .card,
+    .profile {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(14px);
+      border-radius: 22px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+      padding: 14px;
+    }
+
+    .panel-item {
+      background: var(--surface-strong);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .panel-item strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+
+    .panel-item span {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .profile {
+      padding: 22px;
+    }
+
+    .profile h2,
+    .section h2 {
+      margin: 0 0 14px;
+      font-size: 1.4rem;
+      letter-spacing: -0.02em;
+    }
+
+    .profile p,
+    .section p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.85;
+    }
+
+    .section {
+      margin-top: 22px;
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .card {
+      padding: 18px;
+      min-height: 180px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .card p {
+      line-height: 1.78;
+    }
+
+    .note {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent-2);
+      background: rgba(200, 92, 45, 0.08);
+      color: var(--text);
+      border-radius: 14px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 118px 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 16px 18px;
+      background: var(--surface-strong);
+      border-radius: 18px;
+      border: 1px solid rgba(38, 48, 65, 0.08);
+    }
+
+    .timeline-item time {
+      font-weight: 700;
+      color: var(--accent-3);
+    }
+
+    .timeline-item strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    footer {
+      padding: 18px 4px 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 0.94rem;
+    }
+
+    @media (max-width: 860px) {
+      .hero-grid,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .timeline-item {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="topbar">
+        <div class="badge"><span class="badge-dot" aria-hidden="true"></span>NAGASAKI OMURA</div>
+        <nav aria-label="ページ内リンク">
+          <a href="#about">概要</a>
+          <a href="#nagoshi">名越まつり</a>
+          <a href="#specialties">名産品</a>
+          <a href="#seasonal">季節の行事</a>
+        </nav>
+      </div>
+
+      <div class="hero-grid">
+        <div>
+          <h1 id="page-title">長崎県大村市の<br>魅力を紹介</h1>
+          <p class="lead">
+            長崎県大村市は、花の名所や伝統行事、郷土の味わいがそろうまちです。
+            ここでは、名越まつり、名産品、夏以外の季節の行事を中心に、大村市の見どころをまとめています。
+          </p>
+          <div class="cta-row">
+            <a class="button primary" href="#nagoshi">名越まつりを見る</a>
+            <a class="button secondary" href="#specialties">名産品を見る</a>
+          </div>
+
+          <div class="panel" aria-label="大村市の見どころ">
+            <div class="panel-item">
+              <strong>花と歴史のまち</strong>
+              <span>大村公園の桜や花菖蒲、裏見の滝自然花苑のしゃくなげなど、季節ごとの景観が楽しめます。</span>
+            </div>
+            <div class="panel-item">
+              <strong>郷土芸能が息づく</strong>
+              <span>おおむら夏越まつりや秋まつりでは、郷土芸能や総踊りなど、市民参加の催しが行われます。</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="profile" id="about">
+          <h2>大村市の概要</h2>
+          <p>
+            大村市は、観光情報や特産品の案内を市公式サイトで発信しており、花の名所、郷土料理、イベント情報がまとまっています。
+            まずは代表的な行事や名産品から知ると、大村らしさが見えやすくなります。
+          </p>
+          <div class="note">
+            ここでは、見学しやすいように「行事」「食べ物」「季節感」の3つに分けて紹介しています。
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="nagoshi">
+      <h2>名越まつり</h2>
+      <p>
+        大村市では、夏の風物詩として「おおむら夏越まつり」が親しまれています。
+        市内神社合同の夏越大祭を中心に、奉納太鼓や郷土芸能、提灯やぐらの点灯、夏越総踊りなどが行われ、
+        まち全体がにぎわいます。
+      </p>
+      <div class="grid">
+        <article class="card">
+          <h3>まちを包む夏の祭り</h3>
+          <p>JR大村駅前通りや中央商店街周辺で開催され、夏の大村を代表する催しとして知られています。</p>
+        </article>
+        <article class="card">
+          <h3>総踊りが見どころ</h3>
+          <p>最終日の夏越総踊りは、多くの参加者が一斉に踊る迫力ある演目として親しまれています。</p>
+        </article>
+        <article class="card">
+          <h3>郷土愛を育む行事</h3>
+          <p>市内の神社や地域文化と結びついた行事として受け継がれ、ふるさとの文化を感じられます。</p>
+        </article>
+      </div>
+      <div class="note">
+        公式情報では「おおむら夏越まつり」として案内されていますが、このページではご指定に合わせて「名越まつり」の紹介としてまとめています。
+      </div>
+    </section>
+
+    <section class="section" id="specialties">
+      <h2>名産品</h2>
+      <p>
+        大村市の特産品には、食べ物だけでなく工芸品もあります。
+        ゆでピーナッツや黒田五寸人参、へこはずしおこしのほか、松原鎌・包丁、三彩焼、真珠工芸などが知られています。
+      </p>
+      <div class="grid">
+        <article class="card">
+          <h3>食の名産</h3>
+          <p>ゆでピーナッツ、黒田五寸人参、へこはずしおこしなど、土地の味を感じられる品があります。</p>
+        </article>
+        <article class="card">
+          <h3>ものづくりの特産</h3>
+          <p>松原鎌・包丁や三彩焼、真珠工芸のように、技や手仕事が息づく特産品も魅力です。</p>
+        </article>
+        <article class="card">
+          <h3>地元らしさが伝わる</h3>
+          <p>食文化と工芸が並んでいるため、訪れた人にも大村の個性が伝わりやすくなっています。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="seasonal">
+      <h2>夏以外の季節の行事</h2>
+      <p>
+        大村市では、夏以外にも季節ごとの見どころがあります。
+        春は大村公園の桜と花菖蒲、裏見の滝自然花苑のしゃくなげが楽しめ、
+        初夏には花菖蒲まつり、秋には民俗芸能が披露される「おおむら秋まつり」などが行われます。
+      </p>
+      <div class="timeline">
+        <div class="timeline-item">
+          <time datetime="03-06">春〜初夏</time>
+          <div>
+            <strong>おおむら花まつり</strong>
+            <span>3月下旬から6月中旬にかけて、大村公園の桜・花菖蒲や裏見の滝自然花苑のしゃくなげが見頃を迎えます。</span>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <time datetime="06-01">6月頃</time>
+          <div>
+            <strong>おおむら花菖蒲まつり</strong>
+            <span>大村公園で花菖蒲を楽しみながら、地元特産品の販売や郷土芸能の披露も行われます。</span>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <time datetime="11-01">11月頃</time>
+          <div>
+            <strong>おおむら秋まつり</strong>
+            <span>11月頃には郷土芸能が披露され、地域の文化や民俗芸能に触れられる季節の行事として親しまれています。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      参考: 大村市公式ホームページの観光情報・特産品・イベント情報
+    </footer>
+  </main>
+</body>
+</html>
