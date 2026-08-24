@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>じゃんけんゲーム</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-card">
+    <p class="eyebrow">LET'S PLAY</p>
+    <h1>じゃんけんゲーム</h1>
+    <p class="guide">好きな手を選んで、コンピュータと勝負！</p>
+
+    <section class="hands" aria-label="対戦結果">
+      <div class="hand-panel">
+        <span class="panel-label">あなた</span>
+        <output id="player-hand" class="hand" aria-live="polite">？</output>
+      </div>
+      <span class="vs">VS</span>
+      <div class="hand-panel">
+        <span class="panel-label">コンピュータ</span>
+        <output id="computer-hand" class="hand" aria-live="polite">？</output>
+      </div>
+    </section>
+
+    <p id="result" class="result" aria-live="assertive">手を選んでください</p>
+
+    <section class="choices" aria-label="じゃんけんの手を選ぶ">
+      <button type="button" data-hand="rock"><span>✊</span>グー</button>
+      <button type="button" data-hand="scissors"><span>✌️</span>チョキ</button>
+      <button type="button" data-hand="paper"><span>🖐️</span>パー</button>
+    </section>
+
+    <section class="scoreboard" aria-label="戦績">
+      <div><span id="wins">0</span><small>勝利数</small></div>
+      <div><span id="losses">0</span><small>敗北数</small></div>
+      <div><span id="draws">0</span><small>あいこ数</small></div>
+      <div><span id="best-streak">0</span><small>最大勝利数<br>（連勝）</small></div>
+    </section>
+
+    <button id="reset" class="reset" type="button">最初から始める</button>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+:root {
+  color: #213047;
+  font-family: system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  background: #edf6ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100svh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: radial-gradient(circle at 15% 15%, #fff4b6 0 5%, transparent 27%), linear-gradient(135deg, #d9edff, #f9fbff 60%, #dff9ef);
+}
+
+.game-card {
+  width: min(100%, 640px);
+  padding: clamp(24px, 6vw, 44px);
+  text-align: center;
+  background: rgb(255 255 255 / 92%);
+  border-radius: 28px;
+  box-shadow: 0 16px 45px rgb(35 76 118 / 18%);
+}
+
+.eyebrow { margin: 0; color: #2979c7; letter-spacing: .18em; font-size: .78rem; font-weight: 800; }
+h1 { margin: 5px 0 4px; font-size: clamp(1.8rem, 7vw, 2.6rem); }
+.guide { margin: 0 0 24px; color: #5d6b7d; }
+
+.hands { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 4vw, 28px); }
+.hand-panel { width: min(38vw, 170px); min-height: 138px; padding: 15px 8px; display: grid; place-items: center; background: #f3f8fd; border-radius: 20px; }
+.panel-label { color: #596b80; font-size: .88rem; font-weight: 700; }
+.hand { font-size: clamp(3.5rem, 13vw, 5.5rem); line-height: 1; }
+.vs { color: #ff7a59; font-size: 1rem; font-weight: 900; font-style: italic; }
+.result { min-height: 2em; margin: 22px 0 16px; color: #173b67; font-size: clamp(1.15rem, 4vw, 1.4rem); font-weight: 800; }
+
+.choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+button { font: inherit; cursor: pointer; }
+.choices button { padding: 12px 6px; color: #173b67; font-weight: 800; background: #fff; border: 2px solid #bedaf4; border-radius: 16px; transition: transform .15s, background .15s; }
+.choices button:hover, .choices button:focus-visible { background: #e4f2ff; transform: translateY(-3px); outline: none; }
+.choices button span { display: block; margin-bottom: 3px; font-size: 2rem; }
+
+.scoreboard { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 27px 0 20px; padding: 15px 8px; background: #eaf7f1; border-radius: 16px; }
+.scoreboard span { display: block; color: #16805c; font-size: 1.55rem; font-weight: 900; }
+.scoreboard small { color: #4e7166; font-size: .72rem; font-weight: 700; }
+.reset { width: 100%; padding: 12px; color: #fff; font-weight: 800; background: #2979c7; border: 0; border-radius: 12px; }
+.reset:hover, .reset:focus-visible { background: #1762aa; outline: 3px solid #a4d3ff; outline-offset: 2px; }
+
+@media (max-width: 390px) { .game-card { padding: 22px 14px; } .scoreboard { gap: 2px; padding-inline: 3px; } .scoreboard small { font-size: .65rem; } }
