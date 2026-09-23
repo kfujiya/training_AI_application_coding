@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>まるばつゲーム</title>
+  <style>
+    :root { --ink: #202736; --line: #d9deeb; --paper: #f7f8fc; --x: #ef5c64; --o: #4077e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 20% 10%, #e6edff 0, transparent 32%), var(--paper); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { width: min(100%, 470px); text-align: center; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 6vw, 2.5rem); letter-spacing: .08em; }
+    .lead { margin: 0 0 24px; color: #697184; }
+    .status { display: flex; align-items: center; justify-content: center; min-height: 54px; margin-bottom: 18px; padding: 12px 18px; border-radius: 14px; background: white; box-shadow: 0 8px 24px #36436a14; font-weight: 700; font-size: 1.05rem; }
+    .mark { display: inline-grid; place-items: center; width: 30px; height: 30px; margin: 0 7px; border-radius: 50%; color: white; font-size: 1.45rem; line-height: 1; }
+    .mark.o { background: var(--o); } .mark.x { background: var(--x); }
+    .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; padding: 9px; background: #ccd4e6; border-radius: 20px; box-shadow: 0 16px 35px #36436a24; }
+    .cell { aspect-ratio: 1; border: 0; border-radius: 12px; background: #fff; color: var(--ink); cursor: pointer; font: inherit; font-size: clamp(3rem, 18vw, 5.5rem); font-weight: 300; line-height: 1; transition: transform .15s, background .15s; }
+    .cell:enabled:hover, .cell:enabled:focus-visible { background: #f0f4ff; transform: scale(.97); outline: 3px solid #8aa9f4; outline-offset: -3px; }
+    .cell[data-mark="○"] { color: var(--o); } .cell[data-mark="×"] { color: var(--x); }
+    .cell.winner { background: #fff5c7; }
+    #restart { margin-top: 24px; padding: 13px 24px; border: 0; border-radius: 999px; background: var(--ink); color: white; cursor: pointer; font: inherit; font-weight: 700; font-size: 1rem; box-shadow: 0 8px 18px #20273633; }
+    #restart:hover, #restart:focus-visible { background: #36415a; outline: 3px solid #8aa9f4; outline-offset: 3px; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>まるばつゲーム</h1>
+    <p class="lead">○と×を交互に置いて、先に3つそろえよう</p>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="board" id="board" role="grid" aria-label="3目並べの盤面"></div>
+    <button id="restart" type="button" hidden>最初から始める</button>
+  </main>
+  <script>
+    const board = document.querySelector('#board');
+    const status = document.querySelector('#status');
+    const restart = document.querySelector('#restart');
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    let cells, current, finished;
+
+    function setStatus(message, mark = '') {
+      status.innerHTML = mark ? `${message}<span class="mark ${mark === '○' ? 'o' : 'x'}">${mark}</span>です` : message;
+    }
+    function makeMove(index) {
+      if (finished || cells[index]) return;
+      cells[index] = current;
+      const button = board.children[index];
+      button.textContent = current;
+      button.dataset.mark = current;
+      button.disabled = true;
+      const winningLine = lines.find(line => line.every(i => cells[i] === current));
+      if (winningLine) {
+        finished = true;
+        winningLine.forEach(i => board.children[i].classList.add('winner'));
+        [...board.children].forEach(cell => cell.disabled = true);
+        setStatus('勝者は', current);
+        restart.hidden = false;
+      } else if (cells.every(Boolean)) {
+        finished = true;
+        setStatus('引き分けです');
+        restart.hidden = false;
+      } else {
+        current = current === '○' ? '×' : '○';
+        setStatus('次の番は', current);
+      }
+    }
+    function resetGame() {
+      cells = Array(9).fill(''); current = '○'; finished = false;
+      board.innerHTML = '';
+      cells.forEach((_, index) => {
+        const cell = document.createElement('button');
+        cell.className = 'cell'; cell.type = 'button'; cell.role = 'gridcell';
+        cell.setAttribute('aria-label', `${Math.floor(index / 3) + 1}行${index % 3 + 1}列`);
+        cell.addEventListener('click', () => makeMove(index));
+        board.append(cell);
+      });
+      restart.hidden = true;
+      setStatus('最初の番は', current);
+    }
+    restart.addEventListener('click', resetGame);
+    resetGame();
+  </script>
+</body>
+</html>
