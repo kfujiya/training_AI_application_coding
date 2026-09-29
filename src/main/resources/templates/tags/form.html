@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('タグ編集')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar}"></div>
+<main class="container page-container py-4"><div class="row justify-content-center"><div class="col-12 col-md-7 col-lg-5">
+  <div class="page-header"><h1 class="h2 mb-1">タグ編集</h1><p class="text-muted mb-0">タグ名を変更します。</p></div>
+  <div class="card border-0 shadow-sm"><div class="card-body p-4"><form th:action="@{/tags/{id}(id=${tagId})}" th:object="${tagForm}" method="post" novalidate><label class="form-label required" for="tagName">タグ名</label><input class="form-control" th:errorclass="is-invalid" id="tagName" th:field="*{name}" maxlength="50" required><div class="invalid-feedback" th:errors="*{name}"></div><div class="d-flex gap-2 mt-4"><button class="btn btn-primary" type="submit">更新する</button><a class="btn btn-outline-secondary" th:href="@{/tags}">キャンセル</a></div></form></div></div>
+</div></div></main>
+</body>
+</html>

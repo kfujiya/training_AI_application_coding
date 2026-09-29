@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${editing} ? 'タスク編集' : 'タスク登録')}"></head>
+<body>
+<div th:replace="~{fragments :: navbar}"></div>
+<main class="container page-container py-4"><div class="row justify-content-center"><div class="col-12 col-lg-8">
+  <div class="page-header"><h1 class="h2 mb-1" th:text="${editing} ? 'タスク編集' : 'タスク登録'"></h1><p class="text-muted mb-0">タスクの内容を入力してください。</p></div>
+  <div class="card border-0 shadow-sm"><div class="card-body p-4">
+    <div th:if="${tagError}" class="alert alert-danger" role="alert" th:text="${tagError}"></div>
+    <form th:action="${formAction}" th:object="${taskForm}" method="post" novalidate>
+      <div class="mb-3"><label class="form-label required" for="taskTitle">タイトル</label><input class="form-control" th:errorclass="is-invalid" id="taskTitle" th:field="*{title}" maxlength="200" required><div class="invalid-feedback" th:errors="*{title}"></div></div>
+      <div class="mb-3"><label class="form-label" for="description">詳細</label><textarea class="form-control" th:errorclass="is-invalid" id="description" th:field="*{description}" maxlength="2000" rows="5"></textarea><div class="invalid-feedback" th:errors="*{description}"></div></div>
+      <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label" for="status">ステータス</label><select class="form-select" th:errorclass="is-invalid" id="status" th:field="*{status}"><option value="TODO">未着手</option><option value="IN_PROGRESS">進行中</option><option value="DONE">完了</option></select><div class="invalid-feedback" th:errors="*{status}"></div></div><div class="col-md-6"><label class="form-label" for="priority">優先度</label><select class="form-select" th:errorclass="is-invalid" id="priority" th:field="*{priority}"><option value="LOW">低</option><option value="MEDIUM">中</option><option value="HIGH">高</option></select><div class="invalid-feedback" th:errors="*{priority}"></div></div></div>
+      <div class="mb-4"><label class="form-label" for="dueDate">期限</label><input class="form-control" id="dueDate" type="date" name="dueDate" th:value="${taskForm.dueDate != null ? #temporals.format(taskForm.dueDate, 'yyyy-MM-dd') : ''}"></div>
+      <fieldset class="mb-4"><legend class="form-label fs-6">タグ</legend><div class="row g-2"><div class="col-6 col-md-4" th:each="tag : ${tags}"><div class="form-check"><input class="form-check-input" type="checkbox" th:field="*{tagIds}" th:value="${tag.tagId}" th:id="${'tag-' + tag.tagId}"><label class="form-check-label" th:for="${'tag-' + tag.tagId}" th:text="${tag.name}"></label></div></div><div th:if="${#lists.isEmpty(tags)}" class="text-muted small">タグ管理からタグを作成できます。</div></div></fieldset>
+      <div class="d-flex gap-2"><button class="btn btn-primary" type="submit" th:text="${editing} ? '更新する' : '登録する'"></button><a class="btn btn-outline-secondary" th:href="@{/tasks}">キャンセル</a></div>
+    </form>
+  </div></div>
+</div></div></main>
+</body>
+</html>

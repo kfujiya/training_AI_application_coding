@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('ユーザー登録')}"></head>
+<body>
+<main class="container py-5"><div class="row justify-content-center"><div class="col-12 col-md-8 col-lg-6">
+  <div class="text-center mb-4"><h1 class="h3 fw-bold text-primary">Task Manager</h1></div>
+  <div class="card border-0 shadow-sm"><div class="card-body p-4 p-md-5">
+    <h2 class="h4 mb-4">ユーザー登録</h2>
+    <div th:if="${registrationError}" class="alert alert-danger" role="alert" th:text="${registrationError}"></div>
+    <form th:action="@{/register}" th:object="${registrationForm}" method="post" novalidate>
+      <div class="mb-3"><label class="form-label required" for="username">ユーザー名</label><input class="form-control" th:errorclass="is-invalid" id="username" th:field="*{username}" maxlength="50" autocomplete="username" required><div class="invalid-feedback" th:errors="*{username}"></div></div>
+      <div class="mb-3"><label class="form-label required" for="email">メールアドレス</label><input class="form-control" th:errorclass="is-invalid" type="email" id="email" th:field="*{email}" maxlength="255" autocomplete="email" required><div class="invalid-feedback" th:errors="*{email}"></div></div>
+      <div class="mb-3"><label class="form-label required" for="password">パスワード</label><input class="form-control" th:errorclass="is-invalid" type="password" id="password" th:field="*{password}" minlength="8" maxlength="255" autocomplete="new-password" required><div class="form-text">8文字以上で入力してください。</div><div class="invalid-feedback" th:errors="*{password}"></div></div>
+      <div class="mb-4"><label class="form-label required" for="displayName">表示名</label><input class="form-control" th:errorclass="is-invalid" id="displayName" th:field="*{displayName}" maxlength="100" required><div class="invalid-feedback" th:errors="*{displayName}"></div></div>
+      <button class="btn btn-primary w-100" type="submit">登録する</button>
+    </form>
+  </div></div>
+  <p class="text-center mt-3"><a th:href="@{/login}">ログインへ戻る</a></p>
+</div></div></main>
+</body>
+</html>

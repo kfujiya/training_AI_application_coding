@@ -1,0 +1,8 @@
+body { background-color: #f8f9fa; }
+.page-container { max-width: 1120px; }
+.page-header { margin-bottom: 1.5rem; }
+.task-card { transition: box-shadow .15s ease-in-out; }
+.task-card:hover { box-shadow: 0 .35rem 1rem rgba(0,0,0,.1); }
+.tag-badge { margin: .15rem .2rem .15rem 0; }
+.form-label { font-weight: 600; }
+.required::after { content: " *"; color: #dc3545; }
