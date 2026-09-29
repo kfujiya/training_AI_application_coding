@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>読書ログ</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="shell">
+    <header class="hero"><div><p class="eyebrow">READING LOG</p><h1>読む、残す、<em>振り返る。</em></h1><p class="lead">本棚と日々の読書を、ひとつの静かな場所に。</p></div><button class="primary" id="openCreate">＋ 登録</button></header>
+    <nav class="tabs" aria-label="表示切替"><button class="tab active" data-tab="books">書籍一覧 <span id="bookCount">0</span></button><button class="tab" data-tab="records">読書記録 <span id="recordCount">0</span></button></nav>
+    <section id="booksPanel" class="panel"><div class="section-heading"><div><p class="eyebrow">YOUR SHELF</p><h2>登録済みの書籍</h2></div></div><div id="booksGrid" class="book-grid"></div></section>
+    <section id="recordsPanel" class="panel hidden"><div class="section-heading"><div><p class="eyebrow">READING SESSIONS</p><h2>読書記録</h2></div></div><div id="recordsList" class="records"></div></section>
+</main>
+<dialog id="createDialog"><form id="createForm"><div class="modal-head"><div><p class="eyebrow">NEW ENTRY</p><h2 id="modalTitle">書籍を登録</h2></div><button type="button" class="icon-button" id="closeCreate">×</button></div><div id="bookFields"><label>ISBN<input name="isbn" maxlength="17" placeholder="978-..." required></label><label>タイトル<input name="title" required></label><div class="two-col"><label>著者<input name="author" required></label><label>巻<input name="volume" type="number" min="1"></label></div><div class="two-col"><label>翻訳者<input name="translator"></label><label>ページ数<input name="pageCount" type="number" min="1" required></label></div><label>読破状況<select name="readingStatus"><option value="00">00 未読</option><option value="01">01 読書中</option><option value="03">03 完読</option><option value="09">09 貸与中</option></select></label></div><div id="recordFields" class="hidden"><label>読んだ本<select name="recordIsbn" id="recordIsbn" required></select></label><div class="two-col"><label>日付<input name="readingDate" type="date" required></label><label>読破ページ数<input name="pagesRead" type="number" min="0" required></label></div><label>コメント<textarea name="comment" rows="4"></textarea></label><label class="check"><input name="completed" type="checkbox"> この読書で完読</label></div><p id="formError" class="error"></p><div class="modal-actions"><button type="button" class="secondary" id="cancelCreate">キャンセル</button><button type="submit" class="primary" id="submitCreate">決定</button></div></form></dialog>
+<script src="app.js"></script>
+</body></html>

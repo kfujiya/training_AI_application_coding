@@ -1,0 +1,89 @@
+読書記録Webアプリ開発 作業記録
+
+- PostgreSQL 18.6をインストールした。
+- PostgreSQLサービス `postgresql-x64-18` が自動起動・実行中であることを確認した。
+- PostgreSQLの5432番ポートが接続受付状態であることを確認した。
+- PostgreSQLテストユーザー `book_test_user` を作成した。
+- テストユーザーのパスワードを `book_test_password_2026` に設定した。
+- テストユーザーが管理者権限を持たない通常ユーザーであることを確認した。
+- テストユーザー用スキーマ `book_test_user` を作成した。
+
+- `book_test_user.books` テーブルを作成した。
+- `books` テーブルに以下の項目を定義した。
+  - ISBN
+  - タイトル
+  - 巻
+  - 著者
+  - 翻訳者
+  - ページ数
+  - 読破状況
+- `book_test_user.reading_records` テーブルを作成した。
+- `reading_records` テーブルに以下の項目を定義した。
+  - 自動採番ID
+  - 日付
+  - ISBN
+  - 読破ページ数
+  - コメント
+  - 完読フラグ
+- 読書記録から書籍への外部キー制約を設定した。
+- 読書記録検索用のISBN・日付インデックスを作成した。
+
+- 書籍の読破状況を2桁コードで管理するよう変更した。
+- `reading_status` を `varchar(2) NOT NULL` に設定した。
+- `reading_status` の許可値を以下に設定した。
+  - `00`: 未読
+  - `01`: 読書中
+  - `03`: 完読
+  - `09`: 貸与中
+- デフォルト値を `00` に設定した。
+- 既存の読破状況をコード値へ変換した。
+
+- 表示サンプル用の書籍20冊を登録した。
+- 表示サンプル用の読書記録5件を登録した。
+- 書籍と読書記録の結合表示を確認した。
+
+- Java 21（Amazon Corretto 21）をインストールした。
+- Maven 3.9.10をワークスペース内に配置した。
+- Tomcat 10.1.59をワークスペース内に配置した。
+- Maven WARプロジェクトを作成した。
+- PostgreSQL JDBCドライバを依存関係に追加した。
+- Tomcat 10.1向けJakarta Servletアプリケーションを実装した。
+- PostgreSQL接続情報を環境変数で上書きできるようにした。
+
+- 書籍一覧表示画面を実装した。
+- 読書記録表示画面を実装した。
+- 書籍一覧と読書記録をタブで切り替えられるようにした。
+- 現在開いているタブに応じて登録モーダルを切り替えるようにした。
+- 書籍登録機能を実装した。
+- 読書記録登録機能を実装した。
+- 読書記録登録時に、登録済み書籍をプルダウンから選択できるようにした。
+- 読書記録の削除ボタンを実装した。
+- 削除前に確認ポップアップを表示するようにした。
+- 削除後に一覧を再読み込みするようにした。
+- 入力値の必須チェック、数値チェック、読破状況コードチェックを実装した。
+- 完読チェックボックスを `true/false` として登録できるようにした。
+
+- MavenでWARファイルをビルドした。
+- 生成物 `target/reading-log.war` をTomcatへ配備した。
+- Tomcat上でアプリケーションが正常配備されることを確認した。
+- `http://localhost:8080/reading-log/` がHTTP 200を返すことを確認した。
+- 書籍APIから20件取得できることを確認した。
+- 読書記録APIから5件取得できることを確認した。
+- 登録APIと削除APIの動作を確認した。
+- API検証用データを削除し、最終的に書籍20件・読書記録5件へ戻した。
+
+- Windowsコマンドプロンプト用のTomcat起動コマンドをREADME.mdへ記載した。
+- DB接続設定をREADME.mdへ記載した。
+- Mavenの生成物とローカルTomcatを `.gitignore` の対象にした。
+
+起動URL:
+- http://localhost:8080/reading-log/
+
+Windowsコマンドプロンプトでの起動:
+- `set "JAVA_HOME=C:\Program Files\Amazon Corretto\jdk21.0.12_9"`
+- `set "CATALINA_HOME=%CD%\.tools\apache-tomcat-10.1.59"`
+- `set "CATALINA_BASE=%CATALINA_HOME%"`
+- `set "DB_URL=jdbc:postgresql://127.0.0.1:5432/postgres"`
+- `set "DB_USER=book_test_user"`
+- `set "DB_PASSWORD=book_test_password_2026"`
+- `call "%CATALINA_HOME%\bin\catalina.bat" run`
