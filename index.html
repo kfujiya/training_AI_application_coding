@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f4ee">
+  <title>三目並べ</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f7f4ee;
+      --ink: #242821;
+      --muted: #777a70;
+      --green: #536b52;
+      --line: #d9d6ca;
+      --card: #fffefa;
+      --circle: #d4775e;
+      --cross: #617b9e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px 18px;
+      background:
+        radial-gradient(ellipse at 15% 10%, #e8e9dc 0, transparent 38%),
+        radial-gradient(ellipse at 90% 90%, #eee4d8 0, transparent 34%),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+    }
+
+    .game {
+      width: min(100%, 420px);
+      padding: 34px 30px 28px;
+      border: 1px solid rgba(72, 78, 62, .1);
+      border-radius: 24px;
+      background: var(--card);
+      box-shadow: 0 22px 70px rgba(55, 53, 42, .1);
+      text-align: center;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .22em;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: clamp(2rem, 9vw, 2.65rem);
+      font-weight: 600;
+      letter-spacing: .12em;
+    }
+
+    .subtitle {
+      margin: 7px 0 26px;
+      color: var(--muted);
+      font-size: .85rem;
+      letter-spacing: .04em;
+    }
+
+    .status {
+      min-height: 48px;
+      margin-bottom: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #55594f;
+      font-size: .95rem;
+    }
+
+    .status-mark {
+      color: var(--circle);
+      font-family: Georgia, serif;
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    .status-mark.cross { color: var(--cross); }
+    .status strong { color: var(--ink); font-weight: 700; }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 10px;
+      border-radius: 19px;
+      background: #eeece4;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid rgba(70, 75, 61, .06);
+      border-radius: 13px;
+      background: var(--card);
+      color: var(--ink);
+      cursor: pointer;
+      font-family: Georgia, "Yu Mincho", serif;
+      font-size: clamp(3.2rem, 17vw, 5rem);
+      line-height: 1;
+      transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cell:empty:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background: #f9f8f2;
+      box-shadow: 0 5px 12px rgba(45, 48, 40, .07);
+    }
+
+    .cell:focus-visible, .restart:focus-visible {
+      outline: 3px solid #92a58a;
+      outline-offset: 3px;
+    }
+
+    .cell.circle { color: var(--circle); }
+    .cell.cross { color: var(--cross); }
+    .cell.winner { background: #e9eee2; }
+    .cell:disabled { cursor: default; }
+
+    .restart {
+      margin-top: 23px;
+      padding: 12px 23px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--green);
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-size: .92rem;
+      font-weight: 600;
+      letter-spacing: .05em;
+      box-shadow: 0 5px 12px rgba(63, 83, 61, .2);
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    .restart:hover { transform: translateY(-1px); background: #435a42; }
+    .restart[hidden] { display: none; }
+
+    @media (max-width: 380px) {
+      .game { padding: 28px 20px 23px; }
+      .board { gap: 8px; padding: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game" aria-labelledby="title">
+    <p class="eyebrow">TIC-TAC-TOE</p>
+    <h1 id="title">三目並べ</h1>
+    <p class="subtitle">三つ並べて勝利をつかもう</p>
+
+    <div class="status" id="status" role="status" aria-live="polite">
+      <span class="status-mark" id="status-mark" aria-hidden="true">○</span>
+      <span><strong>○</strong> の番です</span>
+    </div>
+
+    <div class="board" id="board" role="group" aria-label="三目並べの盤面">
+      <button class="cell" type="button" data-index="0" aria-label="1行1列、空き"></button>
+      <button class="cell" type="button" data-index="1" aria-label="1行2列、空き"></button>
+      <button class="cell" type="button" data-index="2" aria-label="1行3列、空き"></button>
+      <button class="cell" type="button" data-index="3" aria-label="2行1列、空き"></button>
+      <button class="cell" type="button" data-index="4" aria-label="2行2列、空き"></button>
+      <button class="cell" type="button" data-index="5" aria-label="2行3列、空き"></button>
+      <button class="cell" type="button" data-index="6" aria-label="3行1列、空き"></button>
+      <button class="cell" type="button" data-index="7" aria-label="3行2列、空き"></button>
+      <button class="cell" type="button" data-index="8" aria-label="3行3列、空き"></button>
+    </div>
+
+    <button class="restart" id="restart" type="button" hidden>最初から始める</button>
+  </main>
+
+  <script>
+    (() => {
+      const cells = Array.from(document.querySelectorAll('.cell'));
+      const status = document.getElementById('status');
+      const statusMark = document.getElementById('status-mark');
+      const restart = document.getElementById('restart');
+      const lines = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+      let board = Array(9).fill('');
+      let current = '○';
+      let finished = false;
+
+      function showTurn() {
+        statusMark.textContent = current;
+        statusMark.classList.toggle('cross', current === '×');
+        status.lastElementChild.innerHTML = `<strong>${current}</strong> の番です`;
+      }
+
+      function endGame(message) {
+        finished = true;
+        statusMark.textContent = '';
+        statusMark.classList.remove('cross');
+        status.lastElementChild.textContent = message;
+        restart.hidden = false;
+        cells.forEach(cell => { cell.disabled = true; });
+      }
+
+      function play(index) {
+        if (finished || board[index]) return;
+
+        board[index] = current;
+        const cell = cells[index];
+        cell.textContent = current;
+        cell.classList.add(current === '○' ? 'circle' : 'cross');
+        const row = Math.floor(index / 3) + 1;
+        const col = index % 3 + 1;
+        cell.setAttribute('aria-label', `${row}行${col}列、${current}`);
+
+        const winningLine = lines.find(line => line.every(position => board[position] === current));
+        if (winningLine) {
+          winningLine.forEach(position => cells[position].classList.add('winner'));
+          endGame(`${current} の勝ちです！`);
+        } else if (board.every(Boolean)) {
+          endGame('引き分けです！');
+        } else {
+          current = current === '○' ? '×' : '○';
+          showTurn();
+        }
+      }
+
+      cells.forEach(cell => cell.addEventListener('click', () => play(Number(cell.dataset.index))));
+
+      restart.addEventListener('click', () => {
+        board = Array(9).fill('');
+        current = '○';
+        finished = false;
+        cells.forEach((cell, index) => {
+          cell.textContent = '';
+          cell.disabled = false;
+          cell.classList.remove('circle', 'cross', 'winner');
+          cell.setAttribute('aria-label', `${Math.floor(index / 3) + 1}行${index % 3 + 1}列、空き`);
+        });
+        restart.hidden = true;
+        showTurn();
+        cells[0].focus();
+      });
+    })();
+  </script>
+</body>
+</html>
