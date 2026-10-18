@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>今日の手帳</title><link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="brand-icon">✳</span><div><small>MY PAPER PLANNER</small><h1>今日の手帳</h1></div></div><div id="today" class="today"></div></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">WRITE IT DOWN, MAKE IT HAPPEN</p><h2>今日を、ひとつずつ。</h2><p>思いついたことを書き留めて、自分のペースで進めましょう。</p></div><span class="scribble">✎</span></section>
+    <div class="section-heading"><div><span class="section-mark yellow-mark"></span><h2>今日のページ</h2></div><span class="section-note">DAILY NOTES</span></div>
+    <div id="daily" class="note-grid"></div>
+    <div class="section-heading long-heading"><div><span class="section-mark blue-mark"></span><h2>いつかやりたいこと</h2></div><button id="new-note" class="add-note">＋ 長期付箋を追加</button></div>
+    <div id="long-term" class="note-grid"></div>
+    <footer>ひとつずつで大丈夫。今日のあなたを応援しています。</footer>
+  </main>
+  <dialog id="settle-dialog"><form method="dialog" class="modal"><button class="close" aria-label="閉じる">×</button><p class="eyebrow">END OF THE DAY</p><h2>今日のタスクを振り返る</h2><div id="settle-content"></div><div class="modal-actions"><button class="cancel">戻る</button><button id="confirm-settle" class="confirm">今日のタスクを終了する</button></div></form></dialog>
+  <div id="toast" role="status"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
