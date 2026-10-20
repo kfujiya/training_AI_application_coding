@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#285e51">
+  <title>週間カレンダー | 天気と世界の祝日</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <main>
+    <header class="masthead"><a class="brand" href="/" aria-label="週間カレンダーのホーム"><span class="brand-icon" aria-hidden="true">▦</span>週間カレンダー</a><button id="settings-open" class="secondary">⚙ 設定</button></header>
+    <section class="intro"><div><p class="eyebrow">YOUR WEEK, AT A GLANCE</p><h1>一週間を、ひと目で。</h1><p class="muted">いつもの街の天気と、世界の祝日を一緒に。</p></div><div class="location"><span aria-hidden="true">◎</span><div><strong id="location-name">東京</strong><span id="timezone">Asia/Tokyo</span></div></div></section>
+    <section class="toolbar" aria-label="表示と情報取得"><div><h2 id="week-label"></h2><p id="country-label" class="muted"></p></div><div class="fetch-controls"><button id="refresh" class="primary">↻ 情報取得</button><span id="cooldown" role="timer" aria-live="off">ボタンを押すと最新情報を取得します</span></div></section>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <section id="calendar" class="calendar" aria-label="日曜日始まりの週間カレンダー"></section>
+    <section class="details"><div class="details-heading"><h2>今週の祝日</h2><span class="tag">日本 ＋ 選択した国</span></div><div id="holiday-list" class="muted">「情報取得」を押すと、この週の祝日を表示します。</div></section>
+    <footer><span>天気: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · 祝日: <a href="https://date.nager.at/" target="_blank" rel="noreferrer">Nager.Date</a></span><span id="last-updated">未取得</span></footer>
+    <p class="footnote">日付は設定地域のタイムゾーン基準です。過ぎた曜日には過去の天気を表示します。情報の自動取得は行いません。</p>
+  </main>
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <div class="dialog-heading"><div><p class="eyebrow">PREFERENCES</p><h2 id="settings-title">カレンダーの設定</h2></div><button type="button" id="settings-close" class="icon-button" aria-label="設定を閉じる">×</button></div>
+      <fieldset><legend>天気を表示する地域</legend>
+        <label for="preset">地域を選択</label><select id="preset"><option value="tokyo">東京</option><option value="osaka">大阪</option><option value="sapporo">札幌</option><option value="sendai">仙台</option><option value="nagoya">名古屋</option><option value="fukuoka">福岡</option><option value="naha">那覇</option><option value="london">ロンドン</option><option value="newyork">ニューヨーク</option><option value="custom">その他（座標で指定）</option></select>
+        <label for="region-name">地域名</label><input id="region-name" required maxlength="100" autocomplete="off">
+        <div class="coordinates"><div><label for="latitude">緯度</label><input id="latitude" type="number" required min="-90" max="90" step="any"></div><div><label for="longitude">経度</label><input id="longitude" type="number" required min="-180" max="180" step="any"></div></div>
+        <label for="region-timezone">タイムゾーン</label><input id="region-timezone" required placeholder="Asia/Tokyo" list="timezone-options"><datalist id="timezone-options"><option value="Asia/Tokyo"><option value="Asia/Seoul"><option value="Asia/Shanghai"><option value="Europe/London"><option value="Europe/Paris"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Australia/Sydney"><option value="UTC"></datalist>
+      </fieldset>
+      <fieldset><legend>祝日を表示する国</legend><p class="field-help">日本は常に表示します。追加する国を複数選択できます。</p><label for="country-search">国を検索</label><input id="country-search" type="search" placeholder="国名 または US などの国コード"><div id="countries" class="country-picker"></div><p id="country-hint" class="field-help">初回取得後にNager.Dateの対応国一覧を反映します。</p></fieldset>
+      <p class="field-help">設定はこのブラウザに保存されます。変更した設定は、次に「情報取得」を押したときに反映されます。設定変更では3時間の制限は解除されません。</p>
+      <p id="settings-error" class="form-error" role="alert"></p>
+      <div class="dialog-actions"><button type="button" id="settings-cancel" class="secondary">キャンセル</button><button type="submit" class="primary">設定を保存</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
