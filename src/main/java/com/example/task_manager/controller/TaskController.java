@@ -6,6 +6,7 @@ import com.example.task_manager.service.TaskService;
 import com.example.task_manager.service.TaskService.TaskNotFoundException;
 import com.example.task_manager.service.TaskService.InvalidTagSelectionException;
 import com.example.task_manager.service.TagService;
+import com.example.task_manager.dto.TaskDisplayLabels;
 import com.example.task_manager.form.TaskFilterForm;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
@@ -27,7 +28,7 @@ public class TaskController {
 
     @GetMapping
     public String list(@ModelAttribute("filter") TaskFilterForm filter, Authentication authentication, Model model) {
-        model.addAttribute("tasks", taskService.findAllOwnedBy(authentication.getName(), filter));
+        model.addAttribute("dashboard", taskService.findDashboard(authentication.getName(), filter));
         model.addAttribute("tags", tagService.findAllOwnedBy(authentication.getName()));
         return "tasks/list";
     }
@@ -62,7 +63,12 @@ public class TaskController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Authentication authentication, Model model) {
         try {
-            model.addAttribute("task", taskService.findOwnedById(id, authentication.getName()));
+            Task task = taskService.findOwnedById(id, authentication.getName());
+            model.addAttribute("task", task);
+            model.addAttribute("statusLabel", TaskDisplayLabels.status(task.getStatus()));
+            model.addAttribute("priorityLabel", TaskDisplayLabels.priority(task.getPriority()));
+            model.addAttribute("statusBadgeClass", TaskDisplayLabels.statusBadgeClass(task.getStatus()));
+            model.addAttribute("priorityBadgeClass", TaskDisplayLabels.priorityBadgeClass(task.getPriority()));
             model.addAttribute("tagNames", taskService.findOwnedTagNames(id, authentication.getName()));
             return "tasks/detail";
         } catch (TaskNotFoundException e) {

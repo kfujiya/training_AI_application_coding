@@ -448,25 +448,25 @@ REST APIの追加時も、Controllerに業務ロジックを実装せずService�
 
 # 20. Slack API連携
 
-将来的にSlack APIとの連携を追加する。
+Slack OAuth連携とSlack Web API通知を、タスク管理処理から分離した専用Service・Clientで実装する。
 
 Slack API連携処理は既存のタスク管理処理と分離する。
 
-想定構成：
+構成：
 
 ```text
-Task Service
+TaskService
+    ↓（DBコミット後）
+SlackNotificationService
     ↓
-Notification Service
-    ↓
-Slack API Client
-    ↓
-Slack
+SlackWebApiClient
+    ↓ conversations.open / chat.postMessage
+Slack DM
 ```
 
-Slack APIの具体的な認証方式や通知仕様は、Slack連携を実装する段階で別途定義する。
+OAuthの開始・callback・連携解除は`SlackIntegrationController`と`SlackOAuthService`が担当する。OAuth stateは`SlackOAuthStateService`で生成し、セッションに10分間保存してcallbackで一度だけ検証する。
 
-初期バージョンではSlack SDKやAPIクライアントを導入しない。
+Bot Tokenは`SlackTokenEncryptionService`で暗号化して保存し、API呼び出し直前に復号する。OAuth情報と暗号化キーは環境変数から取得する。
 
 ---
 
@@ -650,10 +650,10 @@ Bootstrapを導入し、基本的なレイアウト、フォーム、ボタン�
 ## Phase 8: 将来拡張
 
 * REST API
-* Slack API
-* タスク通知
+* メール通知
+* 定期通知・期限通知
 
-Phase 8は初期バージョン完成後に実施する。
+Slack OAuth連携とタスク通知は実装済みであり、Phase 8の対象外とする。
 
 ---
 
@@ -670,9 +670,39 @@ Phase 8は初期バージョン完成後に実施する。
 7. パスワードを平文で保存しない。
 8. DB構造をHibernateの自動生成に依存しない。
 9. 機密情報をソースコードやログへ出力しない。
-10. 将来のREST APIやSlack API追加を考慮し、Service層とWeb層を分離する。
+10. REST APIやSlack連携を含む外部連携を考慮し、Service層とWeb層を分離する。
 11. 要件にない機能を独断で追加しない。
 12. 既存の設計を変更する場合は、変更理由を明示する。
+
+---
+
+# 26. Slack通知設計
+
+`TaskService`はタスク保存処理を担当し、`SlackNotificationService`は通知内容の生成とSlack API呼び出しを担当する。タスク所有者の`user_id`から`SlackConnection`と`SlackInstallation`を解決するため、ログイン中ユーザーへ誤送信しない。
+
+タスクの登録・更新処理は既存の`@Transactional`境界を維持し、`TransactionSynchronizationManager`のコミット後コールバックで通知する。通知処理の例外は通知サービス内で処理し、タスク処理へ伝播させない。
+
+HTTP通信はJava 21標準の`java.net.http.HttpClient`を使用する。`conversations.open`でDMチャンネルを取得し、`dm_channel_id`へ保存して再利用する。保存済みチャンネルが無効な場合は再取得する。HTTPステータスとレスポンスJSONの`ok`を両方確認する。
+
+通知の種類は以下とする。
+
+* タスク登録
+* タスク更新
+* タスク完了（`DONE`への状態変更）
+
+通信失敗、Token復号失敗、未連携ユーザー、Slack APIエラーは通知のみをスキップする。`invalid_auth`と`token_revoked`の場合のみ対象連携を`REVOKED`へ更新する。Token、Client Secret、認可コード、暗号化キー、APIリクエスト内容はログへ出力しない。
+
+## Slack設定
+
+以下の環境変数を使用する。
+
+* `SLACK_CLIENT_ID`
+* `SLACK_CLIENT_SECRET`
+* `SLACK_REDIRECT_URI`
+* `SLACK_TOKEN_ENCRYPTION_KEY`
+
+Slack AppのOAuth Redirect URLには`SLACK_REDIRECT_URI`と同じURLを登録し、Bot Token Scopesには`chat:write`と`im:write`を設定する。Incoming Webhook方式および`SLACK_WEBHOOK_URL`は現在の通知処理では使用しない。
+
 
 ---
 
@@ -692,3 +722,8 @@ docs/
 * `database.md`：DB構造・テーブル定義
 
 実装上の判断が必要になった場合は、まずこれらのドキュメントとの整合性を確認する。
+## Slack通知 Phase 1 第2段階
+
+`TaskService`は既存のコミット後コールバックを維持し、`SlackNotificationService`へ通知を委譲する。通知サービスはタスク所有者の`SlackConnection`からWorkspaceの`SlackInstallation`を解決し、暗号化Bot Tokenを復号して`conversations.open`と`chat.postMessage`を呼び出す。DMチャンネルIDは`slack_connections.dm_channel_id`へ保存して再利用する。
+
+Slack APIのHTTPステータスとJSONの`ok`を検証し、通信失敗・APIエラー・Token復号失敗はログ記録後に通知をスキップする。`invalid_auth`と`token_revoked`の場合だけ対象Connectionを`REVOKED`に更新し、その他のAPIエラーでは連携を無効化しない。認証情報やTokenはログへ出力しない。

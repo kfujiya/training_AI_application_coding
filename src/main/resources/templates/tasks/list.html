@@ -1,30 +1,53 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments :: head('タスク一覧')}"></head>
+<head th:replace="~{fragments :: head('ダッシュボード')}"></head>
 <body>
 <div th:replace="~{fragments :: navbar}"></div>
 <main class="container page-container py-4">
-  <div class="page-header d-flex flex-wrap gap-3 justify-content-between align-items-center"><div><h1 class="h2 mb-1">タスク一覧</h1><p class="text-muted mb-0">自分のタスクを管理しましょう。</p></div><a class="btn btn-primary" th:href="@{/tasks/new}">＋ タスクを登録</a></div>
+  <div class="page-header d-flex flex-wrap gap-3 justify-content-between align-items-center">
+    <div><p class="text-primary fw-semibold mb-1">Task overview</p><h1 class="h2 mb-1">ダッシュボード</h1><p class="text-muted mb-0">タスク全体の状況と、優先して確認するタスクをまとめています。</p></div>
+    <a class="btn btn-primary" th:href="@{/tasks/new}">＋ 新しいタスク</a>
+  </div>
   <div th:if="${param.notFound}" class="alert alert-warning" role="alert">指定されたタスクは見つかりません。</div>
-  <div class="card border-0 shadow-sm mb-4"><div class="card-body">
-    <form th:action="@{/tasks}" th:object="${filter}" method="get" class="row g-3 align-items-end">
+
+  <section aria-labelledby="summary-heading" class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3"><h2 id="summary-heading" class="h5 mb-0">全体サマリー</h2><span class="small text-muted" th:text="${dashboard.summary.totalCount + '件のタスク'}"></span></div>
+    <div class="row g-3">
+      <div class="col-6 col-xl-3"><div class="card summary-card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-muted">未完了</div><div class="summary-value" th:text="${dashboard.summary.incompleteCount}"></div><div class="small text-muted">対応が必要なタスク</div></div></div></div>
+      <div class="col-6 col-xl-3"><div class="card summary-card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-muted">期限超過</div><div class="summary-value text-danger" th:text="${dashboard.summary.overdueCount}"></div><div class="small text-muted">未完了の期限超過</div></div></div></div>
+      <div class="col-6 col-xl-3"><div class="card summary-card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-muted">本日期限</div><div class="summary-value text-warning-emphasis" th:text="${dashboard.summary.dueTodayCount}"></div><div class="small text-muted">今日対応するタスク</div></div></div></div>
+      <div class="col-6 col-xl-3"><div class="card summary-card border-0 shadow-sm h-100"><div class="card-body"><div class="small text-muted">完了率</div><div class="summary-value text-success" th:text="${dashboard.summary.completionRate + '%'}"></div><div class="small text-muted" th:text="${dashboard.summary.completedCount + '件完了'}"></div></div></div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="priority-heading" class="mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-3"><div><h2 id="priority-heading" class="h5 mb-1">優先タスク</h2><p class="small text-muted mb-0">期限と優先度をもとに、先に確認したいタスクです。</p></div></div>
+    <div th:if="${#lists.isEmpty(dashboard.priorityTasks)}" class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-4">優先して対応するタスクはありません。</div></div>
+    <div th:unless="${#lists.isEmpty(dashboard.priorityTasks)}" class="row g-3">
+      <div class="col-12 col-md-6 col-xl-4" th:each="item : ${dashboard.priorityTasks}"><article class="card priority-card border-0 shadow-sm h-100"><div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-3"><span class="badge rounded-pill" th:classappend="${item.priorityBadgeClass}" th:text="${item.priorityLabel}"></span><span class="badge rounded-pill" th:classappend="${item.statusBadgeClass}" th:text="${item.statusLabel}"></span></div>
+        <h3 class="h6 mb-3"><a class="stretched-link text-decoration-none" th:href="@{/tasks/{id}(id=${item.taskId})}" th:text="${item.title}"></a></h3>
+        <div class="small mt-auto" th:classappend="${item.dueStateClass}"><span th:text="${item.dueStateLabel}"></span><span class="ms-1" th:text="${item.dueDate != null ? item.dueDate : ''}"></span></div>
+      </div></article></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="tasks-heading">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-end mb-3"><div><h2 id="tasks-heading" class="h5 mb-1">全タスク</h2><p class="small text-muted mb-0">検索・絞り込み結果</p></div></div>
+    <div class="card border-0 shadow-sm mb-4"><div class="card-body"><form th:action="@{/tasks}" th:object="${filter}" method="get" class="row g-3 align-items-end">
       <div class="col-12 col-md-4"><label class="form-label" for="title">タイトル</label><input class="form-control" id="title" th:field="*{title}" placeholder="タイトルで検索"></div>
       <div class="col-6 col-md-2"><label class="form-label" for="status">ステータス</label><select class="form-select" id="status" th:field="*{status}"><option value="">すべて</option><option value="TODO">未着手</option><option value="IN_PROGRESS">進行中</option><option value="DONE">完了</option></select></div>
       <div class="col-6 col-md-2"><label class="form-label" for="priority">優先度</label><select class="form-select" id="priority" th:field="*{priority}"><option value="">すべて</option><option value="LOW">低</option><option value="MEDIUM">中</option><option value="HIGH">高</option></select></div>
       <div class="col-6 col-md-2"><label class="form-label" for="tagId">タグ</label><select class="form-select" id="tagId" th:field="*{tagId}"><option value="">すべて</option><option th:each="tag : ${tags}" th:value="${tag.tagId}" th:text="${tag.name}"></option></select></div>
       <div class="col-6 col-md-2"><label class="form-label" for="dueDate">期限</label><input class="form-control" id="dueDate" type="date" th:field="*{dueDate}"></div>
-      <div class="col-12 d-flex gap-2"><button class="btn btn-outline-primary" type="submit">絞り込む</button><a class="btn btn-outline-secondary" th:href="@{/tasks}">条件をクリア</a></div>
-    </form>
-  </div></div>
-  <div th:if="${#lists.isEmpty(tasks)}" class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-5"><div class="display-6 mb-2">✓</div><p class="mb-0">該当するタスクはありません。</p></div></div>
-  <div th:unless="${#lists.isEmpty(tasks)}" class="row g-4">
-    <div class="col-12 col-md-6 col-xl-4" th:each="item : ${tasks}"><div class="card task-card border-0 shadow-sm h-100"><div class="card-body d-flex flex-column">
-      <div class="d-flex justify-content-between gap-2 mb-2"><h2 class="h5 card-title mb-0"><a class="text-decoration-none" th:href="@{/tasks/{id}(id=${item.taskId})}" th:text="${item.title}"></a></h2><span class="badge bg-secondary align-self-start" th:text="${item.status}"></span></div>
-      <div class="small text-muted mb-3">優先度: <span class="badge bg-light text-dark border" th:text="${item.priority}"></span> <span class="ms-2">期限: <span th:text="${item.dueDate != null ? item.dueDate : '-'}"></span></span></div>
-      <div class="mb-3"><span class="badge rounded-pill bg-info text-dark tag-badge" th:each="tagName : ${item.tagNames}" th:text="${tagName}"></span><span th:if="${#lists.isEmpty(item.tagNames)}" class="text-muted small">タグなし</span></div>
-      <div class="mt-auto d-flex gap-2"><a class="btn btn-sm btn-outline-primary" th:href="@{/tasks/{id}/edit(id=${item.taskId})}">編集</a><form th:action="@{/tasks/{id}/delete(id=${item.taskId})}" method="post"><button class="btn btn-sm btn-outline-danger" type="submit">削除</button></form></div>
-    </div></div></div>
-  </div>
+      <div class="col-12 d-flex flex-wrap gap-2"><button class="btn btn-outline-primary" type="submit">絞り込む</button><a class="btn btn-outline-secondary" th:href="@{/tasks}">条件をクリア</a></div>
+    </form></div></div>
+
+    <div th:if="${#lists.isEmpty(dashboard.tasks)}" class="card border-0 shadow-sm"><div class="card-body text-center text-muted py-5"><div class="display-6 mb-2">–</div><p class="mb-0" th:text="${filter.hasConditions()} ? '検索条件に一致するタスクはありません。' : 'タスクはまだ登録されていません。'"></p><a th:if="${!filter.hasConditions()}" class="btn btn-primary mt-3" th:href="@{/tasks/new}">最初のタスクを登録</a></div></div>
+    <div th:unless="${#lists.isEmpty(dashboard.tasks)}" class="card border-0 shadow-sm overflow-hidden"><div class="table-responsive"><table class="table task-table align-middle mb-0"><thead class="table-light"><tr><th scope="col">タスク</th><th scope="col">ステータス</th><th scope="col">優先度</th><th scope="col">期限</th><th scope="col">タグ</th><th scope="col" class="text-end">操作</th></tr></thead><tbody>
+      <tr th:each="item : ${dashboard.tasks}" th:classappend="${item.completed} ? 'task-completed' : ''"><td class="task-title-cell"><a class="fw-semibold text-decoration-none" th:href="@{/tasks/{id}(id=${item.taskId})}" th:text="${item.title}"></a></td><td><span class="badge rounded-pill" th:classappend="${item.statusBadgeClass}" th:text="${item.statusLabel}"></span></td><td><span class="badge rounded-pill" th:classappend="${item.priorityBadgeClass}" th:text="${item.priorityLabel}"></span></td><td><span class="small" th:classappend="${item.dueStateClass}" th:text="${item.dueDate != null ? item.dueDate : '未設定'}"></span><span th:if="${item.overdue || item.dueToday}" class="d-block small fw-semibold" th:classappend="${item.dueStateClass}" th:text="${item.dueStateLabel}"></span></td><td><span class="badge rounded-pill bg-info-subtle text-info-emphasis tag-badge" th:each="tagName : ${item.tagNames}" th:text="${tagName}"></span><span th:if="${#lists.isEmpty(item.tagNames)}" class="small text-muted">なし</span></td><td class="text-end text-nowrap"><a class="btn btn-sm btn-outline-primary" th:href="@{/tasks/{id}/edit(id=${item.taskId})}">編集</a><form class="d-inline" th:action="@{/tasks/{id}/delete(id=${item.taskId})}" method="post"><button class="btn btn-sm btn-outline-danger" type="submit">削除</button></form></td></tr>
+    </tbody></table></div></div>
+  </section>
 </main>
 </body>
 </html>

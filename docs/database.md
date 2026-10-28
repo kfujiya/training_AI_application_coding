@@ -6,7 +6,7 @@
 
 データベース名は `task_manager` とする。
 
-初期バージョンでは以下の4テーブルを使用する。
+タスク管理機能では以下の4テーブルを使用する。
 
 | テーブル        | 役割                     |
 | ----------- | ---------------------- |
@@ -15,7 +15,7 @@
 | `tags`      | タスクに付与するタグを管理する        |
 | `task_tags` | タスクとタグの多対多の関連を管理する     |
 
-将来的な外部API連携（例：Slack APIによる通知）を想定するが、初期バージョンではSlack連携専用のテーブルは作成しない。
+Slack OAuth連携を利用するため、別DDL `src/main/resources/db/slack_integration.sql` で`slack_installations`と`slack_connections`を追加する。既存の4テーブルは変更しない。
 
 ---
 
@@ -46,6 +46,11 @@ tags
 * `tasks` N : N `tags`
 * `tasks` 1 : N `task_tags`
 * `tags` 1 : N `task_tags`
+
+Slack連携は以下の関係を持つ。
+
+* `users` 1 : 0..1 `slack_connections`
+* `slack_installations` 1 : N `slack_connections`
 
 1人のユーザーが複数のタスクを登録できる。
 
@@ -319,48 +324,31 @@ tags
 
 ---
 
-# 11. 将来のSlack API連携
+# 11. Slack連携テーブル
 
-将来的にSlack APIを利用してタスク通知機能を追加することを想定する。
+Slack OAuth連携情報は、既存の4テーブルとは分離した以下の2テーブルで管理する。
 
-ただし、初期バージョンではSlack専用テーブルを作成しない。
+* `slack_installations`：Workspace単位のBot User、暗号化済みBot Token、scope
+* `slack_connections`：アプリユーザーとSlack User、Workspace、DMチャンネル、連携状態
 
-将来的には以下のような情報が必要になる可能性がある。
+`slack_connections.user_id`は`users.user_id`を参照し、1アプリユーザーにつき1件とする。`slack_installations.workspace_id`は一意、`slack_connections (workspace_id, slack_user_id)`も一意とし、同一Slackアカウントの重複連携を防止する。ユーザー削除時はConnectionを削除するが、共有Installationは`ON DELETE RESTRICT`により自動削除しない。
 
-* SlackユーザーID
-* SlackチャンネルID
-* 通知対象ユーザー
-* 通知対象タスク
-* 通知種別
-* 通知タイミング
-* 通知済み状態
-
-Slack連携の要件が具体化した段階で、既存テーブルへのカラム追加または新規テーブル追加を検討する。
-
-初期バージョンでは、Slack API連携のために現在の4テーブルの設計を過度に複雑化しない。
+Bot Tokenは`bot_access_token_encrypted`へ暗号化して保存する。DDLは`src/main/resources/db/slack_integration.sql`を管理者が既存DBへ適用する。アプリケーションは`ddl-auto: validate`で起動し、実行時にスキーマを変更しない。
 
 ---
 
-# 12. 初期テーブル一覧
+# 12. テーブル一覧
 
-初期バージョンでは以下の4テーブルのみを作成する。
+現在のアプリケーションでは以下の6テーブルを使用する。
 
 ```text
 users
 tasks
 tags
 task_tags
+slack_installations
+slack_connections
 ```
-
-以下のテーブルは初期バージョンでは作成しない。
-
-```text
-slack_users
-notifications
-notification_settings
-```
-
-これらは将来的なSlack連携の要件が確定した時点で再検討する。
 
 ---
 
@@ -373,6 +361,6 @@ notification_settings
 * タスクの状態と優先度は文字列で管理する。
 * タグはユーザー単位で管理する。
 * タスクとタグは中間テーブルによって多対多で関連付ける。
-* 初期バージョンでは4テーブルに限定する。
-* 将来のSlack API連携は、要件確定後にDBを拡張する。
+* タスク管理の基幹テーブルは`users`、`tasks`、`tags`、`task_tags`とする。
+* Slack連携は`slack_installations`、`slack_connections`で管理する。
 * DB設計とアプリケーション実装を分離し、アプリケーション側で勝手にDB構造を変更しない。

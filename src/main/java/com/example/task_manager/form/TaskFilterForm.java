@@ -19,4 +19,12 @@ public class TaskFilterForm {
     public void setTagId(Long tagId) { this.tagId = tagId; }
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
+    public boolean hasConditions() {
+        return (title != null && !title.isBlank())
+                || (status != null && !status.isBlank())
+                || (priority != null && !priority.isBlank())
+                || tagId != null
+                || dueDate != null;
+    }
 }

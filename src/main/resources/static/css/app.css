@@ -6,3 +6,15 @@ body { background-color: #f8f9fa; }
 .tag-badge { margin: .15rem .2rem .15rem 0; }
 .form-label { font-weight: 600; }
 .required::after { content: " *"; color: #dc3545; }
+.summary-card { border-top: .2rem solid var(--bs-primary) !important; }
+.summary-value { font-size: 2rem; font-weight: 700; line-height: 1.2; margin: .35rem 0; }
+.priority-card { position: relative; border-left: .25rem solid var(--bs-primary) !important; }
+.priority-card:hover { box-shadow: 0 .35rem 1rem rgba(0,0,0,.1) !important; }
+.task-table th { font-size: .8rem; font-weight: 600; color: var(--bs-secondary-color); white-space: nowrap; }
+.task-table td { padding-top: .9rem; padding-bottom: .9rem; }
+.task-title-cell { min-width: 16rem; }
+.task-completed .task-title-cell a { color: var(--bs-secondary-color) !important; text-decoration: line-through !important; }
+@media (max-width: 575.98px) {
+  .page-container { padding-left: 1rem; padding-right: 1rem; }
+  .summary-value { font-size: 1.65rem; }
+}

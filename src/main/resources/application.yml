@@ -1,7 +1,7 @@
 spring:
   application:
     name: task-manager
-    
+
   datasource:
     url: jdbc:postgresql://localhost:5433/task_manager
     username: postgres
@@ -12,3 +12,10 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+
+slack:
+  oauth:
+    client-id: ${SLACK_CLIENT_ID:}
+    client-secret: ${SLACK_CLIENT_SECRET:}
+    redirect-uri: ${SLACK_REDIRECT_URI:}
+    encryption-key: ${SLACK_TOKEN_ENCRYPTION_KEY:}

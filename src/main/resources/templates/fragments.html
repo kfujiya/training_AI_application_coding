@@ -14,7 +14,8 @@
     <a class="navbar-brand fw-bold" th:href="@{/tasks}">Task Manager</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="メニュー"><span class="navbar-toggler-icon"></span></button>
     <div id="mainNav" class="collapse navbar-collapse">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0"><li class="nav-item"><a class="nav-link" th:href="@{/tasks}">タスク</a></li><li class="nav-item"><a class="nav-link" th:href="@{/tags}">タグ管理</a></li></ul>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0"><li class="nav-item"><a class="nav-link" th:href="@{/tasks}">タスク</a></li><li class="nav-item"><a class="nav-link" th:href="@{/tags}">タグ管理</a></li><li class="nav-item"><a class="nav-link" th:href="@{/settings/slack}">Slack連携</a></li></ul>
+      <span class="navbar-text text-white me-3" th:if="${currentUserDisplayName != null}" th:text="${currentUserDisplayName}"></span>
       <form th:action="@{/logout}" method="post" class="d-flex"><button class="btn btn-outline-light btn-sm" type="submit">ログアウト</button></form>
     </div>
   </div>
