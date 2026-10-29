@@ -1,18 +1,21 @@
-## Phase 1 Slack通知の現状
+# 1. Phase 1 Slack通知の現状
 
 現在はSlack OAuth連携済みユーザーのSlack DMへ、Slack Web APIで通知する方式です。Incoming Webhook方式は撤去済みで、`SLACK_WEBHOOK_URL`は使用しません。
 
+```yaml
 slack:
   oauth:
     client-id: ${SLACK_CLIENT_ID:}
     client-secret: ${SLACK_CLIENT_SECRET:}
     redirect-uri: ${SLACK_REDIRECT_URI:}
     encryption-key: ${SLACK_TOKEN_ENCRYPTION_KEY:}
+```
 
-- application.yml (src/main/resources/application.yml:16)
+設定箇所：`src/main/resources/application.yml`
 
 通知処理は以下です。
 
+```text
 TaskService.create/update
     ↓ DB保存
 TransactionSynchronization.afterCommit()
@@ -22,10 +25,13 @@ SlackNotificationService
 HttpSlackWebApiClient
     ↓ conversations.open / chat.postMessage
 Slack DM
+```
 
-- TaskService.java (src/main/java/com/example/task_manager/service/TaskService.java:122)
-- SlackNotificationService.java (src/main/java/com/example/task_manager/service/SlackNotificationService.java)
-- HttpSlackWebApiClient.java (src/main/java/com/example/task_manager/service/HttpSlackWebApiClient.java)
+関連クラス：
+
+- `src/main/java/com/example/task_manager/service/TaskService.java`
+- `src/main/java/com/example/task_manager/service/SlackNotificationService.java`
+- `src/main/java/com/example/task_manager/service/HttpSlackWebApiClient.java`
 
 未連携、Token復号失敗、通信失敗、Slack APIエラーの場合は通知をスキップし、タスク処理には影響させない設計です。
 
