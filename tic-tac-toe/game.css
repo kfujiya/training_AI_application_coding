@@ -1,0 +1,93 @@
+:root {
+  color-scheme: light;
+  font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", sans-serif;
+  background: #2c160b;
+  color: #fff4d4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top, #6a3516, #1b0d07 72%);
+}
+
+.game {
+  width: min(94vw, 600px);
+  padding: clamp(20px, 5vw, 36px);
+  text-align: center;
+  background: rgb(32 14 7 / 82%);
+  border: 2px solid #a95b20;
+  border-radius: 24px;
+  box-shadow: 0 16px 45px rgb(0 0 0 / 42%);
+}
+
+h1 {
+  margin: 0 0 8px;
+  color: #ffd583;
+  font-size: clamp(2rem, 8vw, 3rem);
+}
+
+.status {
+  min-height: 1.7em;
+  margin: 0 0 20px;
+  color: #ffe7b0;
+  font-weight: 700;
+}
+
+.board {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 14%;
+  background: url("item/木枠の3×3パズル盤.png") center / 100% 100% no-repeat;
+}
+
+.cell {
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  width: 20.3%;
+  height: 20.3%;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cell:not(:disabled):hover,
+.cell:not(:disabled):focus-visible { background: rgb(255 226 145 / 18%); }
+
+.cell:focus-visible { outline: 3px solid #fff2ba; outline-offset: -4px; }
+.cell:disabled { cursor: default; }
+
+.cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 2px rgb(43 13 5 / 40%));
+  user-select: none;
+  pointer-events: none;
+}
+
+.restart {
+  margin-top: 22px;
+  padding: 12px 22px;
+  border: 2px solid #ffc76b;
+  border-radius: 999px;
+  background: #b84b1b;
+  color: #fff8e4;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.restart:hover,
+.restart:focus-visible { background: #d36221; }

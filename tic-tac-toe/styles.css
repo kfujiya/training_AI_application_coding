@@ -1,0 +1,74 @@
+:root {
+  color-scheme: light;
+  font-family: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", sans-serif;
+  background: #000;
+  color: #1c2534;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: grid;
+  place-items: center;
+}
+
+.game {
+  width: min(92vw, 440px);
+  padding: 32px;
+  text-align: center;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 12px 35px rgb(32 50 83 / 14%);
+}
+
+h1 { margin: 0 0 12px; font-size: 2rem; }
+
+.status {
+  min-height: 1.7em;
+  margin: 0 0 24px;
+  color: #4b5b73;
+  font-weight: 700;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 12px;
+  background: #e9f0fa;
+  color: #1f66d1;
+  cursor: pointer;
+  font-size: clamp(2.5rem, 13vw, 4.25rem);
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.cell:hover:not(:disabled), .cell:focus-visible:not(:disabled) {
+  background: #d8e7fb;
+  transform: translateY(-2px);
+}
+
+.cell[data-mark="×"] { color: #d34862; }
+.cell:disabled { cursor: default; }
+
+.restart {
+  margin-top: 24px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #1f66d1;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.restart:hover, .restart:focus-visible { background: #1555b4; }
