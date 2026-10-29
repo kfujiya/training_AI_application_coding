@@ -1,0 +1,182 @@
+読書記録Webアプリケーション：チャット指示まとめ
+================================================
+
+1. 目的
+-------
+PostgreSQLに保存した書籍と読書記録を、Java/TomcatによるWeb画面から
+表示・登録・削除できるアプリケーションを作成する。
+
+
+2. 実行環境
+-----------
+・Webサーバー：XAMPP付属 Apache Tomcat 8.5
+・Java：Java 21（ビルド時はJava 17互換でコンパイル）
+・データベース：PostgreSQL
+・データベース名：postgres
+・スキーマ：public
+・接続ユーザー：postgres
+・ローカルテスト環境のパスワード：password
+・アプリケーションURL：http://localhost:8080/reading-log/
+
+
+3. PostgreSQLテーブル
+---------------------
+テーブル名とカラム名は英語のsnake_caseで定義する。
+
+■ books（書籍）
+・isbn：ISBN、主キー
+・title：タイトル
+・volume：巻（任意）
+・author：著者
+・translator：翻訳者（任意）
+・page_count：ページ数
+・reading_status：読破状況
+  - unread：未読
+  - reading：読書中
+  - completed：読破済み
+
+■ reading_records（読書記録）
+・reading_record_id：読書記録ID、主キー、自動採番
+・reading_date：日付
+・isbn：ISBN、booksへの外部キー
+・pages_read：読破ページ数
+・comment：コメント（任意）
+・is_completed：完読したかどうか
+
+初期表示サンプルとして、書籍20冊、読書記録5件を登録する。
+テーブル作成・サンプルデータ登録SQLは、プロジェクトルートの
+database/reading_log_setup.sql に保存されている。
+
+
+4. 初期画面の要件
+-----------------
+・登録済みの書籍一覧と読書記録を表示する。
+・「書籍一覧」「読書記録」のタブボタンで表示内容を切り替える。
+・各行の右端に「削除」ボタンを表示する。
+・削除ボタンを押したら、削除確認ポップアップを表示する。
+・確認でOKが選択された場合だけ対象レコードを削除する。
+・削除後は画面を再読み込みし、削除結果を表示する。
+・書籍を削除する場合は、その書籍に紐づく読書記録も削除する。
+
+
+5. 登録画面の要件
+-----------------
+・初期画面に「登録」ボタンを表示する。
+・登録ボタンを押すと、ページ遷移ではなくモーダルを表示する。
+・登録ボタンを押した時点で開いているタブにより、登録対象を決定する。
+  - 書籍一覧タブ：書籍登録モーダル
+  - 読書記録タブ：読書記録登録モーダル
+・書籍登録では、ISBN、タイトル、巻、著者、翻訳者、ページ数、
+  読破状況を入力できるようにする。
+・読書記録登録では、登録済みの書籍をプルダウンから選択する。
+・読書記録では、日付、書籍、読破ページ数、コメント、完読を入力する。
+・「決定」ボタンでデータを登録し、モーダルを閉じて一覧へ戻る。
+・登録後は操作していたタブを表示する。
+・必須項目、数値範囲、ISBN形式、データ重複を検証する。
+
+
+6. スタイリング要件
+-------------------
+tic-tac-toeフォルダ内の画面と雰囲気を合わせ、見やすくする。
+
+採用したデザイン方針：
+・濃紺のグラデーション背景
+・半透明のダークパネル
+・水色の主要ボタン
+・ピンク系の削除ボタン
+・角を丸めたタブ、ボタン、入力欄、モーダル
+・一覧行のホバー表示
+・スクロール時にも見える固定テーブルヘッダー
+・読破状況を色分けしたステータス表示
+・スマートフォン向けレスポンシブ対応
+
+
+7. アプリケーション構成
+-----------------------
+・src/main/java/com/example/readinglog/Database.java
+  PostgreSQLへの接続処理。
+
+・src/main/java/com/example/readinglog/ReadingLogRepository.java
+  書籍と読書記録の検索・登録・削除処理。
+
+・src/main/java/com/example/readinglog/ReadingLogServlet.java
+  画面表示、入力受付、検証、リダイレクト処理。
+
+・src/main/java/com/example/readinglog/Html.java
+  HTMLエスケープ処理。
+
+・src/main/webapp/WEB-INF/views/index.jsp
+  書籍一覧、読書記録、登録モーダルの画面。
+
+・src/main/webapp/assets/style.css
+  tic-tac-toeの雰囲気に合わせたスタイル。
+
+・src/main/webapp/assets/app.js
+  タブ切り替え、モーダル表示、削除確認処理。
+
+・src/main/webapp/index.jsp
+  アプリケーション画面へのリダイレクト。
+
+・src/main/webapp/WEB-INF/web.xml
+  Webアプリケーション設定。
+
+・lib/postgresql.jar
+  PostgreSQL JDBCドライバ。
+
+・build.ps1
+  JavaのコンパイルとWAR生成を行うPowerShellスクリプト。
+
+
+8. DB接続設定
+-------------
+初期値：
+・URL：jdbc:postgresql://localhost:5432/postgres
+・ユーザー：postgres
+・パスワード：password
+
+必要に応じて、Tomcat起動前に次の環境変数で変更できる。
+・READING_LOG_DB_URL
+・READING_LOG_DB_USER
+・READING_LOG_DB_PASSWORD
+
+
+9. ビルドとTomcatへの配備
+-------------------------
+プロジェクトルートで以下を実行する。
+
+powershell -NoProfile -ExecutionPolicy Bypass -File .\reading-log-web\build.ps1
+
+生成物：
+reading-log-web/reading-log.war
+
+生成したWARを次の場所へコピーする。
+
+Copy-Item .\reading-log-web\reading-log.war C:\xampp\tomcat\webapps\reading-log.war -Force
+
+TomcatがWARを自動展開する場所：
+C:\xampp\tomcat\webapps\reading-log
+
+実際に配備されるWAR：
+C:\xampp\tomcat\webapps\reading-log.war
+
+開発時はTomcatの展開先を直接編集せず、reading-log-web内のソースを修正し、
+WARを再ビルド・再配備する。
+
+
+10. 動作確認内容
+----------------
+・アプリケーション画面がHTTP 200で表示されること。
+・CSSがtext/css、JavaScriptがtext/javascriptとして配信されること。
+・書籍を登録・削除できること。
+・読書記録を登録・削除できること。
+・操作後のデータ件数が正しく反映されること。
+・結合テスト用の一時データはテスト後に削除し、初期状態の
+  書籍20冊、読書記録5件へ戻すこと。
+
+
+11. 補足
+--------
+Servletは /app に割り当て、CSSやJavaScriptなどの静的ファイルが
+Tomcatの標準処理から正しく配信される構成にしている。
+ルートURL /reading-log/ へアクセスすると /reading-log/app へ移動する。
+
