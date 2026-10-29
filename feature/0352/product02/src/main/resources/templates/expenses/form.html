@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' - 簡易家計簿アプリ'">支出登録 - 簡易家計簿アプリ</title>
+    <style>
+        body { font-family: sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; color: #263238; }
+        h1 { margin-bottom: 1.5rem; }
+        .field { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: .35rem; font-weight: bold; }
+        input, select { box-sizing: border-box; width: 100%; padding: .65rem; border: 1px solid #b0bec5; border-radius: 4px; font: inherit; }
+        .error { color: #b71c1c; margin: .3rem 0 0; }
+        .actions { display: flex; gap: .75rem; margin-top: 1.5rem; }
+        button, .cancel { padding: .65rem 1rem; border: 0; border-radius: 4px; font: inherit; text-decoration: none; cursor: pointer; }
+        button { background: #1f4e78; color: #fff; }
+        .cancel { background: #eceff1; color: #263238; }
+    </style>
+</head>
+<body>
+<main>
+    <h1 th:text="${pageTitle}">支出登録</h1>
+    <form th:action="${formAction}" th:object="${expenseForm}" method="post">
+        <div class="field">
+            <label for="expenseDate">支出日</label>
+            <input id="expenseDate" type="date" th:field="*{expenseDate}" required>
+            <p class="error" th:if="${#fields.hasErrors('expenseDate')}" th:errors="*{expenseDate}">支出日を確認してください。</p>
+        </div>
+
+        <div class="field">
+            <label for="category">カテゴリ</label>
+            <select id="category" th:field="*{category}" required>
+                <option value="">選択してください</option>
+                <option th:each="category : ${categories}" th:value="${category}" th:text="${category}">食費</option>
+            </select>
+            <p class="error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">カテゴリを選択してください。</p>
+        </div>
+
+        <div class="field">
+            <label for="description">内容</label>
+            <input id="description" type="text" th:field="*{description}" maxlength="200" required>
+            <p class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">内容を確認してください。</p>
+        </div>
+
+        <div class="field">
+            <label for="amount">金額</label>
+            <input id="amount" type="number" th:field="*{amount}" min="0.01" max="9999999999.99" step="0.01" required>
+            <p class="error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}">金額を確認してください。</p>
+        </div>
+
+        <div class="actions">
+            <button type="submit" th:text="${submitLabel}">登録</button>
+            <a class="cancel" th:href="@{/expenses}">キャンセル</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>
