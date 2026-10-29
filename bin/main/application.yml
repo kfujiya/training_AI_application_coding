@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: weather-information-management
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5434/weather_db}
+    username: ${DB_USERNAME:weather_app}
+    password: ${DB_PASSWORD:}
+    hikari:
+      connection-timeout: 5000
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    time-zone: Asia/Tokyo
+
+open-meteo:
+  geocoding-url: ${OPEN_METEO_GEOCODING_URL:https://geocoding-api.open-meteo.com}
+  forecast-url: ${OPEN_METEO_FORECAST_URL:https://api.open-meteo.com}
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never

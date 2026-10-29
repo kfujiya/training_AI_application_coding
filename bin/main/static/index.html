@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>天気情報管理</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><h1>天気情報管理</h1><nav><button data-view="home">トップ</button><button data-view="search">地点検索</button><button data-view="history">履歴</button><button data-view="locations">地点管理</button></nav></header>
+<main>
+  <p id="message" role="status"></p>
+  <section id="home" class="view"><h2>登録地点の最新天気</h2><div id="home-list" class="cards"></div></section>
+  <section id="search" class="view hidden"><h2>地点検索</h2><form id="search-form"><input id="query" minlength="2" placeholder="都市名（例：東京）" required><button>検索</button></form><div id="search-results"></div></section>
+  <section id="history" class="view hidden"><h2>天気履歴</h2><form id="history-form"><select id="history-location"></select><input id="from" type="date"><input id="to" type="date"><button>検索</button></form><div class="table-wrap"><table><thead><tr><th>地点</th><th>予報対象</th><th>取得日時</th><th>気温</th><th>体感</th><th>降水確率</th><th>湿度</th><th>風速</th></tr></thead><tbody id="history-body"></tbody></table></div></section>
+  <section id="locations" class="view hidden"><h2>地点管理</h2><p>地点を削除しても履歴を失わないよう、履歴がある地点は削除できません。</p><div id="location-list"></div></section>
+</main>
+<script src="/app.js"></script>
+</body></html>
