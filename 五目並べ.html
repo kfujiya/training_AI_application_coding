@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e6">
+  <title>五目並べ</title>
+  <style>
+    :root { color-scheme: light; --paper:#f4f0e6; --ink:#27312c; --muted:#788078; --green:#356c50; --green-dark:#28543d; --wood:#d9ae70; --shadow:0 22px 60px rgb(48 54 43 / 10%); }
+    * { box-sizing:border-box; }
+    body { min-height:100vh; margin:0; display:grid; place-items:center; padding:28px 18px; color:var(--ink); background:radial-gradient(ellipse at 10% 12%,rgb(218 226 205 / 58%),transparent 30rem),radial-gradient(ellipse at 92% 90%,rgb(244 220 199 / 48%),transparent 28rem),var(--paper); font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",Meiryo,sans-serif; }
+    .game { width:min(100%,710px); padding:clamp(22px,5vw,42px); border:1px solid rgb(255 255 255 / 85%); border-radius:28px; background:rgb(255 254 250 / 90%); box-shadow:var(--shadow); text-align:center; }
+    .eyebrow { margin:0 0 9px; color:var(--green); font-size:.72rem; font-weight:800; letter-spacing:.2em; }
+    h1 { margin:0; font-size:clamp(2rem,8vw,2.6rem); font-weight:800; letter-spacing:.08em; }
+    .description { margin:8px 0 23px; color:var(--muted); font-size:.9rem; }
+    .status { min-height:54px; margin:0 0 16px; display:flex; align-items:center; justify-content:center; gap:10px; border:1px solid #e2e2d8; border-radius:14px; background:#fbfaf6; color:#41483f; font-size:.98rem; font-weight:700; }
+    .status-stone { width:22px; height:22px; flex:none; border-radius:50%; background:#242424; box-shadow:inset -2px -3px 4px rgb(0 0 0 / 24%),inset 2px 2px 4px rgb(255 255 255 / 24%),0 1px 2px rgb(0 0 0 / 20%); }
+    .status-stone[data-stone="白"] { border:1px solid #c8c8c8; background:radial-gradient(circle at 32% 28%,#fff,#e5e5e5 68%,#cfcfcf); }
+    .board-wrap { width:min(100%,620px); margin-inline:auto; overflow:auto; padding:9px; border:1px solid #c79c61; border-radius:13px; background:var(--wood); box-shadow:inset 0 1px 5px rgb(92 59 24 / 13%); overscroll-behavior-x:contain; }
+    .board { display:grid; grid-template-columns:repeat(13,minmax(0,1fr)); width:100%; aspect-ratio:1; background-color:#e4bd83; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' preserveAspectRatio='none'%3E%3Cg stroke='%23694824' stroke-opacity='.58' stroke-width='.035'%3E%3Cpath d='M.5 .5V12.5M1.5 .5V12.5M2.5 .5V12.5M3.5 .5V12.5M4.5 .5V12.5M5.5 .5V12.5M6.5 .5V12.5M7.5 .5V12.5M8.5 .5V12.5M9.5 .5V12.5M10.5 .5V12.5M11.5 .5V12.5M12.5 .5V12.5M.5 .5H12.5M.5 1.5H12.5M.5 2.5H12.5M.5 3.5H12.5M.5 4.5H12.5M.5 5.5H12.5M.5 6.5H12.5M.5 7.5H12.5M.5 8.5H12.5M.5 9.5H12.5M.5 10.5H12.5M.5 11.5H12.5M.5 12.5H12.5'/%3E%3C/g%3E%3C/svg%3E"); background-size:100% 100%; }
+    .cell { position:relative; z-index:0; display:grid; place-items:center; min-width:0; aspect-ratio:1; padding:0; border:0; border-radius:50%; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+    .cell:not(:disabled):hover { background:radial-gradient(circle,rgb(255 255 255 / 30%) 0 40%,transparent 43%); }
+    .cell:focus-visible,.restart:focus-visible { outline:3px solid #356c50; outline-offset:2px; z-index:1; }
+    .cell:disabled { cursor:default; }
+    .stone { display:block; width:76%; height:76%; border-radius:50%; pointer-events:none; }
+    .stone.black { background:radial-gradient(circle at 32% 28%,#686868,#242424 55%,#080808); box-shadow:inset -2px -3px 4px rgb(0 0 0 / 45%),inset 2px 2px 4px rgb(255 255 255 / 25%),0 1px 2px rgb(0 0 0 / 30%); }
+    .stone.white { border:1px solid #c6c6c6; background:radial-gradient(circle at 32% 28%,#fff,#f4f4f4 58%,#d8d8d8); box-shadow:inset -2px -3px 4px rgb(0 0 0 / 12%),0 1px 2px rgb(0 0 0 / 25%); }
+    .cell.winning { background:rgb(255 247 182 / 78%); }
+    .footer { min-height:58px; padding-top:16px; display:flex; align-items:center; justify-content:center; }
+    .hint { margin:0; color:var(--muted); font-size:.8rem; }
+    .restart { padding:12px 22px; border:0; border-radius:999px; background:var(--green); color:white; font:inherit; font-size:.9rem; font-weight:700; cursor:pointer; transition:background .15s ease,transform .15s ease; }
+    .restart:hover { transform:translateY(-1px); background:var(--green-dark); }
+    [hidden] { display:none!important; }
+    @media(max-width:480px) { body{padding:14px 10px}.game{padding:22px 14px;border-radius:22px}.board-wrap{padding:6px}.description{margin-bottom:18px}.status{margin-bottom:12px} }
+    @media(prefers-reduced-motion:reduce) { *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important} }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <p class="eyebrow">TAKE YOUR TURN</p>
+    <h1>五目並べ</h1>
+    <p class="description">黒石から交互に置いて、先に5つ並べましょう。</p>
+    <p class="status" aria-live="polite"><span class="status-stone" id="status-stone" aria-hidden="true"></span><span id="status-text">黒石の番です</span></p>
+    <div class="board-wrap"><div class="board" id="board" role="group" aria-label="13×13の五目並べ盤面"></div></div>
+    <div class="footer"><p class="hint" id="hint">マスをクリックして石を置きます</p><button class="restart" id="restart" type="button" hidden>最初から始める</button></div>
+  </main>
+  <script>
+    const size = 13;
+    const winLength = 5;
+    const boardElement = document.querySelector("#board");
+    const statusStone = document.querySelector("#status-stone");
+    const statusText = document.querySelector("#status-text");
+    const hint = document.querySelector("#hint");
+    const restartButton = document.querySelector("#restart");
+    const cells = [];
+    let board = Array(size * size).fill("");
+    let currentPlayer = "黒";
+    let gameOver = false;
+
+    for (let index = 0; index < board.length; index += 1) {
+      const cell = document.createElement("button");
+      const row = Math.floor(index / size) + 1;
+      const column = index % size + 1;
+      cell.className = "cell";
+      cell.type = "button";
+      cell.setAttribute("aria-label", `${row}行${column}列、空き`);
+      cell.addEventListener("click", () => play(index));
+      cells.push(cell);
+      boardElement.append(cell);
+    }
+
+    function stoneElement(player) {
+      const stone = document.createElement("span");
+      stone.className = `stone ${player === "黒" ? "black" : "white"}`;
+      stone.setAttribute("aria-hidden", "true");
+      return stone;
+    }
+
+    function hasFive(index, player) {
+      const row = Math.floor(index / size);
+      const column = index % size;
+      const directions = [[0,1],[1,0],[1,1],[1,-1]];
+      return directions.some(([dr, dc]) => {
+        let count = 1;
+        for (const sign of [-1, 1]) {
+          let r = row + dr * sign;
+          let c = column + dc * sign;
+          while (r >= 0 && r < size && c >= 0 && c < size && board[r * size + c] === player) {
+            count += 1;
+            r += dr * sign;
+            c += dc * sign;
+          }
+        }
+        return count >= winLength;
+      });
+    }
+
+    function highlightWinningLine(index, player) {
+      const row = Math.floor(index / size);
+      const column = index % size;
+      for (const [dr, dc] of [[0,1],[1,0],[1,1],[1,-1]]) {
+        const line = [index];
+        for (const sign of [-1, 1]) {
+          let r = row + dr * sign;
+          let c = column + dc * sign;
+          while (r >= 0 && r < size && c >= 0 && c < size && board[r * size + c] === player) {
+            line.push(r * size + c);
+            r += dr * sign;
+            c += dc * sign;
+          }
+        }
+        if (line.length >= winLength) {
+          line.forEach((position) => cells[position].classList.add("winning"));
+          return;
+        }
+      }
+    }
+
+    function finish(message) {
+      gameOver = true;
+      statusText.textContent = message;
+      hint.hidden = true;
+      restartButton.hidden = false;
+      cells.forEach((cell) => { cell.disabled = true; });
+    }
+
+    function play(index) {
+      if (gameOver || board[index]) return;
+      board[index] = currentPlayer;
+      const cell = cells[index];
+      cell.replaceChildren(stoneElement(currentPlayer));
+      cell.dataset.stone = currentPlayer;
+      cell.disabled = true;
+      cell.setAttribute("aria-label", `${Math.floor(index / size) + 1}行${index % size + 1}列、${currentPlayer}石`);
+      if (hasFive(index, currentPlayer)) {
+        highlightWinningLine(index, currentPlayer);
+        finish(`${currentPlayer}石の勝ちです！`);
+        return;
+      }
+      if (board.every(Boolean)) {
+        finish("引き分けです");
+        return;
+      }
+      currentPlayer = currentPlayer === "黒" ? "白" : "黒";
+      statusStone.dataset.stone = currentPlayer;
+      statusText.textContent = `${currentPlayer}石の番です`;
+    }
+
+    function resetGame() {
+      board = Array(size * size).fill("");
+      currentPlayer = "黒";
+      gameOver = false;
+      cells.forEach((cell, index) => {
+        cell.replaceChildren();
+        cell.disabled = false;
+        delete cell.dataset.stone;
+        cell.classList.remove("winning");
+        cell.setAttribute("aria-label", `${Math.floor(index / size) + 1}行${index % size + 1}列、空き`);
+      });
+      delete statusStone.dataset.stone;
+      statusText.textContent = "黒石の番です";
+      hint.hidden = false;
+      restartButton.hidden = true;
+    }
+
+    restartButton.addEventListener("click", resetGame);
+  </script>
+</body>
+</html>
