@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${formTitle} + ' | dolly closet'">所持アイテム</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="page-shell form-shell">
+	<a class="back-link" th:href="${clothingId != null ? '/clothes/' + clothingId : '/clothes'}">← 所持アイテム一覧へ</a>
+	<section class="form-intro"><p class="eyebrow">OWNED ITEM</p><h1 th:text="${formTitle}">所持アイテム</h1><p>商品デザインを選び、カラーやサイズ、着用できるドールをこの所持品ごとに記録します。</p></section>
+	<form class="content-panel form-panel" th:object="${ownedItemForm}" th:action="${clothingId != null ? '/clothes/' + clothingId : '/clothes'}" method="post">
+		<div class="form-errors" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div>
+		<div class="form-field"><label for="designId">商品デザイン <span class="required">必須</span></label><select id="designId" th:field="*{designId}" required><option value="">商品デザインを選択</option><option th:each="design : ${designs}" th:value="${design.id}" th:text="|${design.name} · ${design.brandName}|"></option></select><p class="field-error" th:errors="*{designId}"></p><p class="field-help">共通情報が未登録の場合は、先に<a class="text-link inline-link" th:href="@{/designs/new}">商品デザインを登録</a>してください。</p></div>
+		<div class="form-grid">
+			<div class="form-field"><label for="colorName">カラー名 <span class="optional">任意</span></label><input id="colorName" type="text" th:field="*{colorName}" maxlength="100" placeholder="例：ミントグリーン"><div class="color-suggestion-actions"><button id="findColorSuggestions" class="button button-secondary" type="button">色コード候補を探す</button><span class="field-help">色名で検索し、近い色見本を選ぶとHEX欄へ入力します。</span></div></div>
+			<div class="form-field"><label for="colorHex">カラーコード <span class="optional">任意</span></label><div class="color-input-row"><input id="colorHex" type="text" th:field="*{colorHex}" maxlength="7" pattern="#[0-9A-Fa-f]{6}" placeholder="#36BFB0" aria-describedby="colorHexHelp colorHexError"><span id="colorPreview" class="color-preview" aria-label="カラー見本"></span></div><p id="colorHexHelp" class="field-help">HEX形式（例：#36BFB0）。空欄でも保存できます。</p><p id="colorHexError" class="field-error" th:errors="*{colorHex}"></p></div>
+		</div>
+		<div id="colorSuggestionPanel" class="color-suggestion-panel" hidden>
+			<p id="colorSuggestionMessage" class="palette-message" role="status" aria-live="polite"></p>
+			<div id="colorSuggestionResults" class="palette-grid"></div>
+			<div class="form-field"><label for="size">メーカー表記サイズ</label><input id="size" type="text" th:field="*{size}" maxlength="50" placeholder="例：MSD / 40cm"></div>
+		</div>
+		<div class="form-field"><label for="dollIds">着用可能なドール</label><select id="dollIds" th:field="*{dollIds}" multiple size="5"><option th:each="doll : ${dolls}" th:value="${doll.id}" th:text="${doll.name} + (${doll.maker != null ? ' · ' + doll.maker : ''})"></option></select><p class="field-help">複数選択できます。色違いごとに個別に設定します。</p></div>
+		<div class="form-field"><label for="notes">この所持品のメモ</label><textarea id="notes" th:field="*{notes}" rows="5"></textarea></div>
+		<div class="form-actions"><a class="button button-quiet" th:href="${clothingId != null ? '/clothes/' + clothingId : '/clothes'}">キャンセル</a><button class="button button-primary" type="submit">保存する</button></div>
+	</form>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer>
+<script>
+	const colorInput = document.getElementById("colorHex");
+	const colorPreview = document.getElementById("colorPreview");
+	const colorNameInput = document.getElementById("colorName");
+	const findColorSuggestions = document.getElementById("findColorSuggestions");
+	const colorSuggestionPanel = document.getElementById("colorSuggestionPanel");
+	const colorSuggestionMessage = document.getElementById("colorSuggestionMessage");
+	const colorSuggestionResults = document.getElementById("colorSuggestionResults");
+	const refreshColorPreview = () => {
+		const value = colorInput.value.trim();
+		colorPreview.style.backgroundColor = /^#[0-9a-f]{6}$/i.test(value) ? value : "transparent";
+	};
+	colorInput.addEventListener("input", refreshColorPreview);
+	findColorSuggestions.addEventListener("click", async () => {
+		const query = colorNameInput.value.trim();
+		colorSuggestionPanel.hidden = false;
+		colorSuggestionResults.replaceChildren();
+		if (!query) {
+			colorSuggestionMessage.textContent = "先にカラー名を入力してください。";
+			return;
+		}
+		findColorSuggestions.disabled = true;
+		colorSuggestionMessage.textContent = "カラー候補を検索しています…";
+		try {
+			const response = await fetch(`/api/color-palettes?q=${encodeURIComponent(query)}`,
+				{ headers: { Accept: "application/json" } });
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message || "カラー候補を取得できませんでした。");
+			result.results.forEach((palette) => {
+				const card = document.createElement("article");
+				card.className = "palette-card";
+				const heading = document.createElement("div");
+				heading.className = "palette-card-heading";
+				const title = document.createElement("h4");
+				title.textContent = palette.text;
+				heading.append(title);
+				card.append(heading);
+				const colors = document.createElement("div");
+				colors.className = "palette-colors";
+				palette.colors.forEach((hex) => {
+					const color = document.createElement("div");
+					color.className = "palette-color";
+					const swatch = document.createElement("span");
+					swatch.className = "palette-swatch";
+					swatch.style.backgroundColor = hex;
+					swatch.setAttribute("aria-hidden", "true");
+					const choose = document.createElement("button");
+					choose.type = "button";
+					choose.className = "hex-copy-button color-choice-button";
+					choose.textContent = `${hex} を使う`;
+					choose.addEventListener("click", () => {
+						colorInput.value = hex;
+						refreshColorPreview();
+						colorInput.dispatchEvent(new Event("input", { bubbles: true }));
+						colorSuggestionMessage.textContent = `${hex} をカラーコードに入力しました。`;
+					});
+					color.append(swatch, choose);
+					colors.append(color);
+				});
+				card.append(colors);
+				if (palette.tags?.length) {
+					const tags = document.createElement("div");
+					tags.className = "tag-row palette-tags";
+					palette.tags.forEach((value) => {
+						const tag = document.createElement("span");
+						tag.className = "tag";
+						tag.textContent = value;
+						tags.append(tag);
+					});
+					card.append(tags);
+				}
+				colorSuggestionResults.append(card);
+			});
+			const queryNote = result.translated
+				? `「${result.originalQuery}」を「${result.translatedQuery}」に翻訳しました。`
+				: `「${result.translatedQuery}」で検索しました。`;
+			colorSuggestionMessage.textContent = result.message
+				? `${queryNote} ${result.message}`
+				: `${queryNote} 色見本を選んでください。`;
+		} catch (error) {
+			colorSuggestionMessage.textContent = error.message || "カラー候補を取得できませんでした。";
+		} finally {
+			findColorSuggestions.disabled = false;
+		}
+	});
+	refreshColorPreview();
+</script>
+</body>
+</html>

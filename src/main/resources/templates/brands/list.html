@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${pageTitle} + ' | dolly closet'">ブランド</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body><header th:replace="~{fragments :: header}"></header><main class="page-shell"><div th:replace="~{fragments :: messages}"></div>
+	<section class="section-heading page-heading"><div><p class="eyebrow">BRANDS & SHOPS</p><h1>ブランド・購入元</h1><p class="muted">新しい購入元は、お洋服の登録時に入力できます。</p></div></section>
+	<div class="table-wrap" th:if="${!#lists.isEmpty(brands)}"><table><thead><tr><th>名前</th><th>Webサイト</th><th>備考</th><th>操作</th></tr></thead><tbody><tr th:each="brand : ${brands}"><td class="strong-cell" th:text="${brand.name}"></td><td><a class="table-link" th:if="${brand.websiteUrl}" th:href="${brand.websiteUrl}" th:text="${brand.websiteUrl}" target="_blank" rel="noopener noreferrer"></a><span th:unless="${brand.websiteUrl}" class="muted">—</span></td><td class="preserve-lines" th:text="${brand.notes ?: '—'}"></td><td><form th:action="@{/brands/{id}/delete(id=${brand.id})}" method="post" onsubmit="return confirm('このブランド・購入元を削除しますか？')"><button class="text-button danger-text" type="submit">削除</button></form></td></tr></tbody></table></div>
+	<div class="empty-state" th:if="${#lists.isEmpty(brands)}"><h2>ブランド・購入元はまだありません</h2><p>お洋服の登録時に入力すると、ここに追加されます。</p></div>
+</main><footer th:replace="~{fragments :: footer}"></footer></body></html>

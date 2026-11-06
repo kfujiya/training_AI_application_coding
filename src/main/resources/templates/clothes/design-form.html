@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${formTitle} + ' | dolly closet'">商品デザイン</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="page-shell form-shell">
+	<a class="back-link" th:href="${designId != null ? '/designs/' + designId : '/designs'}">← デザイン一覧へ</a>
+	<section class="form-intro"><p class="eyebrow">DESIGN</p><h1 th:text="${formTitle}">商品デザイン</h1><p>ブランド、カテゴリ、商品名など、色違いで共通する情報を登録します。</p></section>
+	<form class="content-panel form-panel" th:object="${designForm}" th:action="${designId != null ? '/designs/' + designId : '/designs'}" method="post">
+		<div class="form-errors" th:if="${#fields.hasGlobalErrors()}"><p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p></div>
+		<div class="form-field"><label for="name">商品名 <span class="required">必須</span></label><input id="name" type="text" th:field="*{name}" maxlength="150" required><p class="field-error" th:errors="*{name}"></p></div>
+		<div class="form-grid">
+			<div class="form-field"><label for="brandName">ブランド・ディーラー・購入元 <span class="required">必須</span></label><input id="brandName" type="text" th:field="*{brandName}" list="brand-options" maxlength="100" placeholder="選択または入力" autocomplete="off" required><datalist id="brand-options"><option th:each="brand : ${brands}" th:value="${brand.name}"></option></datalist><p class="field-error" th:errors="*{brandName}"></p><p class="field-help">新しい名前は保存時に登録されます。</p></div>
+			<div class="form-field"><label for="categoryName">カテゴリ <span class="required">必須</span></label><input id="categoryName" type="text" th:field="*{categoryName}" list="category-options" maxlength="100" placeholder="選択または入力" autocomplete="off" required><datalist id="category-options"><option th:each="category : ${categories}" th:value="${category.name}"></option></datalist><p class="field-error" th:errors="*{categoryName}"></p><p class="field-help">既存カテゴリの候補、または新しいカテゴリを入力できます。</p></div>
+			<div class="form-field"><label for="setName">セット名 <span class="optional">任意</span></label><input id="setName" type="text" th:field="*{setName}" maxlength="150" placeholder="単品の場合は空欄"><p class="field-help">同じフルセットに属する商品デザインに同じセット名を設定します。</p></div>
+		</div>
+		<div class="form-field"><label for="description">商品説明・共通メモ</label><textarea id="description" th:field="*{description}" rows="5"></textarea></div>
+		<div class="form-actions"><a class="button button-quiet" th:href="${designId != null ? '/designs/' + designId : '/designs'}">キャンセル</a><button class="button button-primary" type="submit">保存する</button></div>
+	</form>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>

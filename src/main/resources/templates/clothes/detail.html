@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${clothing.name} + ' | dolly closet'">所持アイテム詳細</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="page-shell">
+	<div th:replace="~{fragments :: messages}"></div><a class="back-link" th:href="@{/clothes}">← 所持アイテム一覧へ</a>
+	<section class="profile-hero clothing-profile"><div class="profile-title"><p class="eyebrow" th:text="${clothing.brandName}">ブランド</p><h1 th:text="${clothing.name}">商品名</h1><p class="swatch-line"><span class="color-swatch" th:style="|background-color: ${clothing.colorHex ?: '#F3F5F4'}|" aria-hidden="true"></span><span th:text="${clothing.colorName ?: 'カラー未登録'}"></span><code th:if="${clothing.colorHex}" th:text="${clothing.colorHex}"></code></p><div class="tag-row"><span class="tag" th:text="${clothing.categoryName}"></span><span class="tag" th:if="${clothing.size}" th:text="${clothing.size}"></span></div></div><div class="button-row"><a class="button button-secondary" th:href="@{/designs/{id}(id=${clothing.designId})}">デザインと色違い</a><a class="button button-secondary" th:href="@{/clothes/{id}/edit(id=${clothing.id})}">編集</a><form th:action="@{/clothes/{id}/delete(id=${clothing.id})}" method="post" onsubmit="return confirm('この所持アイテムを削除しますか？')"><button class="button button-danger-outline" type="submit">削除</button></form></div></section>
+	<section class="content-panel"><p class="eyebrow">DESIGN & OWNERSHIP</p><h2>アイテム情報</h2><dl class="detail-grid"><div><dt>商品デザイン</dt><dd><a class="table-link" th:href="@{/designs/{id}(id=${clothing.designId})}" th:text="${clothing.name}"></a></dd></div><div><dt>ブランド・購入元</dt><dd th:text="${clothing.brandName}"></dd></div><div><dt>カテゴリ</dt><dd th:text="${clothing.categoryName}"></dd></div><div><dt>セット名</dt><dd><span th:text="${clothing.setName ?: '単品'}"></span><a class="text-link inline-link" th:if="${clothing.setName}" th:href="@{/sets/{brandId}(brandId=${clothing.brandId},name=${clothing.setName})}">同じセットを見る →</a></dd></div><div><dt>メーカー表記サイズ</dt><dd th:text="${clothing.size ?: '未登録'}"></dd></div><div><dt>商品説明・共通メモ</dt><dd class="preserve-lines" th:text="${clothing.description ?: '共通メモはありません。'}"></dd></div><div class="detail-wide"><dt>この所持品のメモ</dt><dd class="preserve-lines" th:text="${clothing.notes ?: '個別メモはありません。'}"></dd></div></dl></section>
+	<section class="content-panel"><div class="section-heading"><div><p class="eyebrow">FITS</p><h2>着用可能なドール</h2></div></div><div class="tag-row" th:if="${!#lists.isEmpty(clothing.dolls)}"><a class="tag tag-link" th:each="doll : ${clothing.dolls}" th:href="@{/dolls/{id}(id=${doll.id})}" th:text="${doll.name}"></a></div><div class="empty-inline" th:if="${#lists.isEmpty(clothing.dolls)}"><p>着用可能なドールはまだ登録されていません。</p></div></section>
+	<section class="content-panel palette-section">
+		<div class="section-heading"><div><p class="eyebrow">COLOR STUDY</p><h2>配色を考える</h2><p class="muted">ColorMagicから色合わせのアイデアを探し、この所持アイテムに保存できます。</p></div></div>
+		<form id="paletteSearchForm" class="palette-search-form">
+			<div class="form-field"><label for="paletteQuery">検索キーワード</label><div class="palette-search-row"><input id="paletteQuery" name="q" type="search" maxlength="100" placeholder="例：ミント、青、レトロ" th:value="${paletteSearchQuery}"><button id="paletteSearchButton" class="button button-primary" type="submit">配色を検索</button></div><p class="field-help">日本語はDeepLで英語に翻訳して検索します。英語キーワードもそのまま使えます。</p></div>
+		</form>
+		<p id="paletteSearchMessage" class="palette-message" role="status" aria-live="polite"></p>
+		<div id="paletteSearchResults" class="palette-grid"></div>
+		<div class="saved-palette-heading"><p class="eyebrow">SAVED PALETTES</p><h3>この所持アイテムに保存した配色</h3></div>
+		<p id="savedPaletteMessage" class="palette-message" role="status" aria-live="polite"></p>
+		<div id="savedPaletteList" class="palette-grid">
+			<article class="palette-card saved-palette-card" th:each="palette : ${savedPalettes}" th:attr="data-saved-palette-id=${palette.id}">
+				<div class="palette-card-heading"><h4 th:text="${palette.text}">パレット名</h4><form class="delete-palette-form" th:action="@{/api/clothes/{itemId}/palettes/{paletteId}(itemId=${clothing.id},paletteId=${palette.id})}" method="post"><button class="text-button danger-text" type="submit">削除</button></form></div>
+				<div class="palette-colors"><div class="palette-color" th:each="color : ${palette.colors}"><span class="palette-swatch" th:style="|background-color: ${color}|" aria-hidden="true"></span><button class="hex-copy-button" type="button" th:text="${color}" th:attr="data-hex=${color}" th:aria-label="|${color} をコピー|"></button></div></div>
+				<div class="tag-row palette-tags" th:if="${!#lists.isEmpty(palette.tags)}"><span class="tag" th:each="tag : ${palette.tags}" th:text="${tag}"></span></div>
+				<p class="saved-at" th:text="|保存日時：${#temporals.format(palette.savedAt, 'yyyy/MM/dd HH:mm')}|"></p>
+			</article>
+		</div>
+		<p class="empty-inline" id="noSavedPalettes" th:if="${#lists.isEmpty(savedPalettes)}">保存済みパレットはありません。</p>
+	</section>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer>
+<script th:inline="javascript">
+	const clothingItemId = /*[[${clothing.id}]]*/ 0;
+	const searchForm = document.getElementById("paletteSearchForm");
+	const searchButton = document.getElementById("paletteSearchButton");
+	const searchMessage = document.getElementById("paletteSearchMessage");
+	const searchResults = document.getElementById("paletteSearchResults");
+	const savedPaletteList = document.getElementById("savedPaletteList");
+	const savedPaletteMessage = document.getElementById("savedPaletteMessage");
+	const noSavedPalettes = document.getElementById("noSavedPalettes");
+
+	const resetPaletteSearch = () => {
+		document.getElementById("paletteQuery").value = "";
+		searchResults.replaceChildren();
+		searchMessage.textContent = "";
+	};
+
+	window.addEventListener("pagehide", resetPaletteSearch);
+	window.addEventListener("pageshow", (event) => {
+		if (event.persisted) resetPaletteSearch();
+	});
+
+	const appendPaletteColors = (container, colors) => {
+		const colorList = document.createElement("div");
+		colorList.className = "palette-colors";
+		colors.forEach((color) => {
+			const colorItem = document.createElement("div");
+			colorItem.className = "palette-color";
+			const swatch = document.createElement("span");
+			swatch.className = "palette-swatch";
+			swatch.style.backgroundColor = color;
+			swatch.setAttribute("aria-hidden", "true");
+			const copyButton = document.createElement("button");
+			copyButton.type = "button";
+			copyButton.className = "hex-copy-button";
+			copyButton.textContent = color;
+			copyButton.dataset.hex = color;
+			copyButton.setAttribute("aria-label", `${color} をコピー`);
+			colorItem.append(swatch, copyButton);
+			colorList.append(colorItem);
+		});
+		container.append(colorList);
+	};
+
+	const appendTags = (container, tags) => {
+		if (!tags.length) return;
+		const tagList = document.createElement("div");
+		tagList.className = "tag-row palette-tags";
+		tags.forEach((tag) => {
+			const element = document.createElement("span");
+			element.className = "tag";
+			element.textContent = tag;
+			tagList.append(element);
+		});
+		container.append(tagList);
+	};
+
+	const createPaletteCard = (palette, saved = false, savedId = null) => {
+		const card = document.createElement("article");
+		card.className = saved ? "palette-card saved-palette-card" : "palette-card";
+		if (savedId !== null) card.dataset.savedPaletteId = savedId;
+		const heading = document.createElement("div");
+		heading.className = "palette-card-heading";
+		const title = document.createElement("h4");
+		title.textContent = palette.text;
+		heading.append(title);
+		if (!saved) {
+			const saveButton = document.createElement("button");
+			saveButton.type = "button";
+			saveButton.className = "button button-secondary save-palette-button";
+			saveButton.textContent = "この配色を保存";
+			saveButton.addEventListener("click", () => savePalette(palette, saveButton));
+			heading.append(saveButton);
+		}
+		card.append(heading);
+		appendPaletteColors(card, palette.colors);
+		appendTags(card, palette.tags || []);
+		if (saved) {
+			const savedAt = document.createElement("p");
+			savedAt.className = "saved-at";
+			savedAt.textContent = "保存済み";
+			card.append(savedAt);
+		}
+		return card;
+	};
+
+	searchForm.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		const query = document.getElementById("paletteQuery").value.trim();
+		searchResults.replaceChildren();
+		searchMessage.textContent = "";
+		if (!query) {
+			searchMessage.textContent = "検索キーワードを入力してください。";
+			return;
+		}
+		searchButton.disabled = true;
+		searchMessage.textContent = "配色を検索しています…";
+		try {
+			const response = await fetch(`/api/color-palettes?q=${encodeURIComponent(query)}`,
+				{ headers: { Accept: "application/json" } });
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message || "配色の検索に失敗しました。");
+			result.results.forEach((palette) => searchResults.append(createPaletteCard(palette)));
+			const queryNote = result.translated
+				? `「${result.originalQuery}」を「${result.translatedQuery}」に翻訳して検索しました。`
+				: `「${result.translatedQuery}」で検索しました。`;
+			searchMessage.textContent = result.message
+				? `${queryNote} ${result.message}`
+				: `${queryNote} ${result.results.length}件の配色が見つかりました。`;
+		} catch (error) {
+			searchMessage.textContent = error.message || "配色サービスに接続できませんでした。";
+		} finally {
+			searchButton.disabled = false;
+		}
+	});
+
+	const savePalette = async (palette, button) => {
+		button.disabled = true;
+		savedPaletteMessage.textContent = "";
+		try {
+			const response = await fetch(`/api/clothes/${clothingItemId}/palettes`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json", Accept: "application/json" },
+				body: JSON.stringify(palette)
+			});
+			const result = await response.json();
+			if (!response.ok) throw new Error(result.message || "配色を保存できませんでした。");
+			if (noSavedPalettes) noSavedPalettes.hidden = true;
+			if (!result.alreadySaved) {
+				savedPaletteList.prepend(createPaletteCard(result.palette, true, result.palette.id));
+			}
+			button.textContent = result.alreadySaved ? "保存済みです" : "保存しました";
+			savedPaletteMessage.textContent = result.alreadySaved
+				? "この配色はすでに保存されています。" : "配色をこの所持アイテムに保存しました。";
+		} catch (error) {
+			savedPaletteMessage.textContent = error.message || "配色を保存できませんでした。";
+			button.disabled = false;
+		}
+	};
+
+	document.addEventListener("click", async (event) => {
+		const copyButton = event.target.closest(".hex-copy-button");
+		if (copyButton) {
+			try {
+				await navigator.clipboard.writeText(copyButton.dataset.hex);
+				searchMessage.textContent = `${copyButton.dataset.hex} をコピーしました。`;
+			} catch {
+				searchMessage.textContent = "カラーコードをコピーできませんでした。";
+			}
+			return;
+		}
+		const deleteButton = event.target.closest(".delete-palette-form button");
+		if (!deleteButton) return;
+		event.preventDefault();
+		if (!window.confirm("この保存済み配色を削除しますか？")) return;
+		const form = deleteButton.closest("form");
+		try {
+			const response = await fetch(form.action, { method: "DELETE" });
+			if (!response.ok) throw new Error("保存済み配色を削除できませんでした。");
+			form.closest(".saved-palette-card").remove();
+			if (!savedPaletteList.querySelector(".saved-palette-card") && noSavedPalettes) {
+				noSavedPalettes.hidden = false;
+			}
+			savedPaletteMessage.textContent = "保存済み配色を削除しました。";
+		} catch (error) {
+			savedPaletteMessage.textContent = error.message || "保存済み配色を削除できませんでした。";
+		}
+	});
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title th:text="${pageTitle} + ' | dolly closet'">所持アイテム</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<header th:replace="~{fragments :: header}"></header>
+<main class="page-shell">
+	<div th:replace="~{fragments :: messages}"></div>
+	<section class="section-heading page-heading"><div><p class="eyebrow">WARDROBE</p><h1>所持アイテムを探す</h1><p class="muted">同じ商品デザインの色違いも、それぞれ独立した所持品として表示します。</p></div><div class="button-row"><a class="button button-secondary" th:href="@{/designs}">デザイン一覧</a><a class="button button-primary" th:href="@{/clothes/new}">＋ 所持アイテムを追加</a></div></section>
+	<form class="filter-panel" th:action="@{/clothes}" method="get">
+		<div class="filter-grid">
+			<div class="form-field"><label for="name">商品名</label><input id="name" name="name" type="search" placeholder="商品名で検索" th:value="${filters.name}"></div>
+			<div class="form-field"><label for="brandId">ブランド・購入元</label><select id="brandId" name="brandId"><option value="">すべて</option><option th:each="brand : ${brands}" th:value="${brand.id}" th:text="${brand.name}" th:selected="${filters.brandId == brand.id}"></option></select></div>
+			<div class="form-field"><label for="categoryId">カテゴリ</label><select id="categoryId" name="categoryId"><option value="">すべて</option><option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}" th:selected="${filters.categoryId == category.id}"></option></select></div>
+			<div class="form-field"><label for="size">メーカー表記サイズ</label><input id="size" name="size" type="search" placeholder="例：MSD" th:value="${filters.size}"></div>
+			<div class="form-field"><label for="setName">セット名</label><input id="setName" name="setName" type="search" placeholder="セット名で検索" th:value="${filters.setName}"></div>
+			<div class="form-field"><label for="dollId">着せられるドール</label><select id="dollId" name="dollId"><option value="">指定なし</option><option th:each="doll : ${dolls}" th:value="${doll.id}" th:text="${doll.name}" th:selected="${filters.dollId == doll.id}"></option></select></div>
+			<div class="form-field"><label for="colorName">カラー名</label><input id="colorName" name="colorName" type="search" placeholder="例：ミント" th:value="${filters.colorName}"></div>
+		</div>
+		<div class="filter-actions"><a class="button button-quiet" th:href="@{/clothes}">条件をクリア</a><button class="button button-secondary" type="submit">この条件で探す</button></div>
+	</form>
+	<div class="result-caption" th:text="${#lists.size(clothes)} + ' 点の所持アイテム'">0点の所持アイテム</div>
+	<div class="clothes-grid" th:if="${!#lists.isEmpty(clothes)}">
+		<article class="clothing-card owned-card" th:each="item : ${clothes}"><div class="clothing-card-body">
+			<p class="eyebrow" th:text="${item.brandName}">ブランド</p>
+			<h2><a th:href="@{/clothes/{id}(id=${item.id})}" th:text="${item.name}">商品名</a></h2>
+			<div class="swatch-line"><span class="color-swatch" th:style="|background-color: ${item.colorHex ?: '#F3F5F4'}|" th:attr="aria-label=${item.colorHex != null ? 'カラーコード ' + item.colorHex : 'カラーコード未登録'}"></span><span th:text="${item.colorName ?: 'カラー未登録'}">カラー</span><code th:if="${item.colorHex}" th:text="${item.colorHex}"></code></div>
+			<div class="tag-row"><span class="tag" th:text="${item.categoryName}">カテゴリ</span><span class="tag" th:if="${item.size}" th:text="${item.size}">サイズ</span><a class="tag tag-link" th:if="${item.setName}" th:href="@{/sets/{brandId}(brandId=${item.brandId},name=${item.setName})}" th:text="${item.setName}">セット</a></div>
+			<a class="card-arrow" th:href="@{/designs/{id}(id=${item.designId})}">デザインと色違いを見る <b>→</b></a>
+		</div></article>
+	</div>
+	<div class="empty-state" th:if="${#lists.isEmpty(clothes)}"><h2>条件に合う所持アイテムがありません</h2><p>検索条件を変えるか、商品デザインと所持アイテムを登録してください。</p><a class="button button-secondary" th:href="@{/designs/new}">商品デザインを登録</a></div>
+</main>
+<footer th:replace="~{fragments :: footer}"></footer>
+</body>
+</html>
