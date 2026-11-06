@@ -1,2 +1,53 @@
-# training_AI_application_coding
-this is codex training repository 
+﻿# ピンゾロゲーム
+
+9個（3個・6個・9個から選択）のサイコロを振り、すべての目を「1」にそろえるブラウザーゲームです。ゲームの経過時間を計測し、成功または投了の記録を PostgreSQL に保存します。
+
+## アプリの概要
+
+- プレイ開始時にサイコロの数を選択できます。
+- サイコロを振るたびに出目を表示し、全て「1」になると成功です。
+- 「投了する」を選ぶと失敗として記録されます。
+- 記録一覧では最大100件のプレイ履歴を確認でき、個別の記録から各回の出目を見返せます。
+- ゲーム結果、開始日時、所要時間、サイコロの数、各回の出目をデータベースに保存します。
+
+## 作成時に指示した内容の概要
+
+9個のサイコロを使ったピンゾロゲームをブラウザーで遊べるようにし、開始・投擲・投了・成功判定を実装すること。プレイ時間を計測し、成功／失敗の結果と各投擲の出目を PostgreSQL に保存して、履歴一覧と詳細画面で参照できるようにすること。あわせて、サイコロ数を3・6・9個から選べる画面と、ローカル環境で起動するための構成を用意すること。
+
+※依頼時のプロンプト原文ではなく、現在のアプリ実装から整理した概要です。
+
+## 使用技術
+
+- Node.js / Express
+- PostgreSQL（`pg`）
+- Docker Compose（PostgreSQLのローカル起動用）
+- HTML / CSS / JavaScript
+
+## 起動方法
+
+1. Docker Desktop を起動します。
+2. このディレクトリで PostgreSQL を起動します。
+
+   ```powershell
+   docker compose up -d
+   ```
+
+3. 依存パッケージをインストールして、アプリを起動します。
+
+   ```powershell
+   npm install
+   npm start
+   ```
+
+4. ブラウザーで [http://localhost:3000](http://localhost:3000) を開きます。
+
+## データベース設定
+
+既定では PostgreSQL の接続先は `localhost:5432`、データベース名は `pinzoro`、ユーザー名とパスワードは `postgres` です。接続設定は `DATABASE_URL`、または `PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD` の環境変数で変更できます。必要なテーブルはサーバー起動時に作成されます。
+
+## 主なファイル
+
+- `server.js`：Express サーバー、API、PostgreSQL の初期化と記録処理
+- `public/`：ゲーム画面とフロントエンド
+- `compose.yaml`：PostgreSQL コンテナの設定
+- `package.json`：起動スクリプトと依存パッケージ
