@@ -48,6 +48,10 @@ public class LibraryStatusServlet extends HttpServlet {
             handleLoanOrReservation(request, response);
             return;
         }
+        if ("return".equals(request.getParameter("action"))) {
+            handleReturn(request, response);
+            return;
+        }
         String isbn = trim(request.getParameter("isbn"));
         String title = trim(request.getParameter("title"));
         String volumeText = trim(request.getParameter("volume"));
@@ -195,6 +199,47 @@ public class LibraryStatusServlet extends HttpServlet {
         }
     }
 
+    private void handleReturn(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String isbn = trim(request.getParameter("isbn"));
+        String normalizedIsbn = isbn == null ? null : isbn.replace("-", "");
+        if (normalizedIsbn == null || !normalizedIsbn.matches("(?:[0-9]{9}[0-9Xx]|[0-9]{13})")) {
+            response.sendRedirect(request.getContextPath() + "/books?message=returnInvalid");
+            return;
+        }
+
+        String result;
+        try (Connection connection = openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                try (PreparedStatement book = connection.prepareStatement(
+                        "SELECT isbn FROM books WHERE isbn = ? FOR UPDATE")) {
+                    book.setString(1, normalizedIsbn);
+                    try (ResultSet rows = book.executeQuery()) {
+                        if (!rows.next()) {
+                            connection.rollback();
+                            response.sendRedirect(request.getContextPath() + "/books?message=notFound");
+                            return;
+                        }
+                    }
+                }
+                try (PreparedStatement update = connection.prepareStatement(
+                        "UPDATE loan_records SET returned_at = CURRENT_TIMESTAMP "
+                        + "WHERE isbn = ? AND returned_at IS NULL")) {
+                    update.setString(1, normalizedIsbn);
+                    result = update.executeUpdate() > 0 ? "returned" : "notOnLoan";
+                }
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException | IllegalStateException e) {
+            getServletContext().log("Failed to return book", e);
+            result = "returnError";
+        }
+        response.sendRedirect(request.getContextPath() + "/books?message=" + result);
+    }
+
     private List<BookStatus> loadBookStatuses() throws SQLException {
         List<BookStatus> books = new ArrayList<BookStatus>();
         try (Connection connection = openConnection();
@@ -253,10 +298,15 @@ public class LibraryStatusServlet extends HttpServlet {
             else if ("notFound".equals(message)) notice = "該当するISBNの書籍がありません。";
             else if ("userNotFound".equals(message)) notice = "該当する氏名の利用者がありません。";
             else if ("error".equals(message)) notice = "処理に失敗しました。入力内容とデータベースを確認してください。";
-            boolean success = "added".equals(message) || "loaned".equals(message) || "reserved".equals(message);
+            else if ("returned".equals(message)) notice = "返却しました。";
+            else if ("notOnLoan".equals(message)) notice = "この書籍は貸出中ではありません。";
+            else if ("returnInvalid".equals(message)) notice = "ISBNを確認してください。";
+            else if ("returnError".equals(message)) notice = "返却処理に失敗しました。データベースを確認してください。";
+            boolean success = "added".equals(message) || "loaned".equals(message)
+                    || "reserved".equals(message) || "returned".equals(message);
             out.println("<p class=\"notice " + (success ? "" : "error") + "\" role=\"status\">" + notice + "</p>");
         }
-        out.println("<div class=\"toolbar\"><p class=\"summary\">登録書籍 " + books.size() + " 冊</p><div><button class=\"button\" type=\"button\" id=\"open-loan\">貸出/予約</button> <button class=\"button\" type=\"button\" id=\"open-registration\">登録</button></div></div>");
+        out.println("<div class=\"toolbar\"><p class=\"summary\">登録書籍 " + books.size() + " 冊</p><div><button class=\"button\" type=\"button\" id=\"open-loan\">貸出/予約</button> <button class=\"button\" type=\"button\" id=\"open-return\">返却</button> <button class=\"button\" type=\"button\" id=\"open-registration\">登録</button></div></div>");
         if (books.isEmpty()) out.println("<div class=\"table-wrap no-books\">表示できる書籍がありません。</div>");
         else {
             out.println("<div class=\"table-wrap\"><table><thead><tr><th>タイトル</th><th>巻</th><th>著者</th><th>貸出中のユーザ</th><th>予約人数</th></tr></thead><tbody>");
@@ -273,11 +323,13 @@ public class LibraryStatusServlet extends HttpServlet {
         out.println("<div class=\"modal\" id=\"loan-modal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"loan-title\"><section class=\"dialog\"><h2 id=\"loan-title\">貸出/予約</h2>");
         out.println("<form method=\"post\" action=\"" + escapeHtml(getServletContext().getContextPath()) + "/books\"><input type=\"hidden\" name=\"action\" value=\"loan\"><div class=\"field\"><label for=\"loan-isbn\">ISBN</label><input id=\"loan-isbn\" name=\"isbn\" type=\"text\" required maxlength=\"17\" pattern=\"[0-9Xx-]{10,17}\" placeholder=\"9784000000000\"></div>");
         out.println("<div class=\"field\"><label for=\"full-name\">氏名</label><input id=\"full-name\" name=\"fullName\" type=\"text\" required maxlength=\"200\"></div><div class=\"actions\"><button class=\"button cancel\" type=\"button\" id=\"close-loan\">キャンセル</button><button class=\"button\" type=\"submit\">決定</button></div></form></section></div>");
+        out.println("<div class=\"modal\" id=\"return-modal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"return-title\"><section class=\"dialog\"><h2 id=\"return-title\">返却</h2>");
+        out.println("<form method=\"post\" action=\"" + escapeHtml(getServletContext().getContextPath()) + "/books\"><input type=\"hidden\" name=\"action\" value=\"return\"><div class=\"field\"><label for=\"return-isbn\">ISBN</label><input id=\"return-isbn\" name=\"isbn\" type=\"text\" required maxlength=\"17\" pattern=\"[0-9Xx-]{10,17}\" placeholder=\"9784000000000\"></div><div class=\"actions\"><button class=\"button cancel\" type=\"button\" id=\"close-return\">キャンセル</button><button class=\"button\" type=\"submit\">決定</button></div></form></section></div>");
         out.println("<div class=\"modal\" id=\"registration-modal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"registration-title\"><section class=\"dialog\"><h2 id=\"registration-title\">書籍を登録</h2>");
         out.println("<form method=\"post\" action=\"" + escapeHtml(getServletContext().getContextPath()) + "/books\"><div class=\"field\"><label for=\"isbn\">ISBN</label><input id=\"isbn\" name=\"isbn\" type=\"text\" required maxlength=\"17\" pattern=\"[0-9Xx-]{10,17}\" placeholder=\"9784000000000\"></div>");
         out.println("<div class=\"field\"><label for=\"title\">タイトル</label><input id=\"title\" name=\"title\" type=\"text\" required maxlength=\"500\"></div><div class=\"field\"><label for=\"volume\">巻</label><input id=\"volume\" name=\"volume\" type=\"number\" min=\"0\"></div>");
         out.println("<div class=\"field\"><label for=\"author\">著者</label><input id=\"author\" name=\"author\" type=\"text\" required maxlength=\"500\"></div><div class=\"actions\"><button class=\"button cancel\" type=\"button\" id=\"close-registration\">キャンセル</button><button class=\"button\" type=\"submit\">決定</button></div></form></section></div>");
-        out.println("<script>(function(){function setup(id,openId,closeId,inputId){var modal=document.getElementById(id);function open(){modal.classList.add('open');document.body.classList.add('modal-open');document.getElementById(inputId).focus()}function close(){modal.classList.remove('open');document.body.classList.remove('modal-open')}document.getElementById(openId).addEventListener('click',open);document.getElementById(closeId).addEventListener('click',close);modal.addEventListener('click',function(e){if(e.target===modal)close()});document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});return open}setup('loan-modal','open-loan','close-loan','loan-isbn');setup('registration-modal','open-registration','close-registration','isbn');var message=new URLSearchParams(location.search).get('message');if(message&&message!=='added'&&['duplicate','invalid'].indexOf(message)>=0)document.getElementById('registration-modal').classList.add('open')})();</script></body></html>");
+        out.println("<script>(function(){function setup(id,openId,closeId,inputId){var modal=document.getElementById(id);function open(){modal.classList.add('open');document.body.classList.add('modal-open');document.getElementById(inputId).focus()}function close(){modal.classList.remove('open');document.body.classList.remove('modal-open')}document.getElementById(openId).addEventListener('click',open);document.getElementById(closeId).addEventListener('click',close);modal.addEventListener('click',function(e){if(e.target===modal)close()});document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});return open}setup('loan-modal','open-loan','close-loan','loan-isbn');setup('return-modal','open-return','close-return','return-isbn');setup('registration-modal','open-registration','close-registration','isbn');var message=new URLSearchParams(location.search).get('message');if(message&&message!=='added'&&['duplicate','invalid'].indexOf(message)>=0)document.getElementById('registration-modal').classList.add('open')})();</script></body></html>");
     }
 
     private String escapeHtml(String value) {
