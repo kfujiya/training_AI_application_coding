@@ -44,6 +44,10 @@ public class LibraryStatusServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        if ("loan".equals(request.getParameter("action"))) {
+            handleLoanOrReservation(request, response);
+            return;
+        }
         String isbn = trim(request.getParameter("isbn"));
         String title = trim(request.getParameter("title"));
         String volumeText = trim(request.getParameter("volume"));
@@ -81,6 +85,113 @@ public class LibraryStatusServlet extends HttpServlet {
             getServletContext().log("Failed to register book", e);
             response.sendRedirect(request.getContextPath()
                     + ("23505".equals(e.getSQLState()) ? "/books?message=duplicate" : "/books?message=error"));
+        }
+    }
+
+    private void handleLoanOrReservation(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String isbn = trim(request.getParameter("isbn"));
+        String fullName = trim(request.getParameter("fullName"));
+        String normalizedIsbn = isbn == null ? null : isbn.replace("-", "");
+        if (normalizedIsbn == null || !normalizedIsbn.matches("(?:[0-9]{9}[0-9Xx]|[0-9]{13})")
+                || fullName == null || fullName.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/books?message=loanInvalid");
+            return;
+        }
+
+        String result;
+        try (Connection connection = openConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                // Serialize requests for the same book so two users cannot both borrow it.
+                try (PreparedStatement book = connection.prepareStatement(
+                        "SELECT isbn FROM books WHERE isbn = ? FOR UPDATE")) {
+                    book.setString(1, normalizedIsbn);
+                    try (ResultSet rows = book.executeQuery()) {
+                        if (!rows.next()) {
+                            result = "notFound";
+                            connection.rollback();
+                            response.sendRedirect(request.getContextPath() + "/books?message=" + result);
+                            return;
+                        }
+                    }
+                }
+                Long userId = null;
+                try (PreparedStatement user = connection.prepareStatement(
+                        "SELECT user_id FROM users WHERE full_name = ? ORDER BY user_id LIMIT 1")) {
+                    user.setString(1, fullName);
+                    try (ResultSet rows = user.executeQuery()) {
+                        if (rows.next()) userId = rows.getLong(1);
+                    }
+                }
+                if (userId == null) {
+                    result = "userNotFound";
+                } else if (hasActiveLoan(connection, normalizedIsbn)) {
+                    try (PreparedStatement reservation = connection.prepareStatement(
+                            "INSERT INTO reservations (user_id, isbn, reserved_at) "
+                            + "SELECT ?, ?, CURRENT_TIMESTAMP WHERE NOT EXISTS ("
+                            + "SELECT 1 FROM reservations WHERE user_id = ? AND isbn = ? AND loaned_at IS NULL)")) {
+                        reservation.setLong(1, userId);
+                        reservation.setString(2, normalizedIsbn);
+                        reservation.setLong(3, userId);
+                        reservation.setString(4, normalizedIsbn);
+                        result = reservation.executeUpdate() == 1 ? "reserved" : "alreadyReserved";
+                    }
+                } else {
+                    Long latestReservationUser = null;
+                    java.sql.Timestamp latestReservedAt = null;
+                    try (PreparedStatement reservation = connection.prepareStatement(
+                            "SELECT user_id, reserved_at FROM reservations WHERE isbn = ? AND loaned_at IS NULL "
+                            + "ORDER BY reserved_at DESC LIMIT 1 FOR UPDATE")) {
+                        reservation.setString(1, normalizedIsbn);
+                        try (ResultSet rows = reservation.executeQuery()) {
+                            if (rows.next()) {
+                                latestReservationUser = rows.getLong(1);
+                                latestReservedAt = rows.getTimestamp(2);
+                            }
+                        }
+                    }
+                    if (latestReservationUser != null && latestReservationUser.longValue() != userId.longValue()) {
+                        result = "reservationOrder";
+                    } else {
+                        try (PreparedStatement loan = connection.prepareStatement(
+                                "INSERT INTO loan_records (user_id, isbn, loaned_at) VALUES (?, ?, CURRENT_TIMESTAMP)")) {
+                            loan.setLong(1, userId);
+                            loan.setString(2, normalizedIsbn);
+                            loan.executeUpdate();
+                        }
+                        if (latestReservationUser != null) {
+                            try (PreparedStatement update = connection.prepareStatement(
+                                    "UPDATE reservations SET loaned_at = CURRENT_TIMESTAMP "
+                                    + "WHERE user_id = ? AND isbn = ? AND reserved_at = ? AND loaned_at IS NULL")) {
+                                update.setLong(1, userId);
+                                update.setString(2, normalizedIsbn);
+                                update.setTimestamp(3, latestReservedAt);
+                                update.executeUpdate();
+                            }
+                        }
+                        result = "loaned";
+                    }
+                }
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw e;
+            }
+        } catch (SQLException | IllegalStateException e) {
+            getServletContext().log("Failed to process loan or reservation", e);
+            result = "error";
+        }
+        response.sendRedirect(request.getContextPath() + "/books?message=" + result);
+    }
+
+    private boolean hasActiveLoan(Connection connection, String isbn) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM loan_records WHERE isbn = ? AND returned_at IS NULL LIMIT 1")) {
+            statement.setString(1, isbn);
+            try (ResultSet rows = statement.executeQuery()) {
+                return rows.next();
+            }
         }
     }
 
@@ -134,9 +245,18 @@ public class LibraryStatusServlet extends HttpServlet {
                     : "duplicate".equals(message) ? "この ISBN はすでに登録されています。"
                     : "invalid".equals(message) ? "入力内容を確認してください。ISBN・タイトル・著者は必須です。"
                     : "書籍を登録できませんでした。入力内容とデータベースを確認してください。";
-            out.println("<p class=\"notice " + ("added".equals(message) ? "" : "error") + "\" role=\"status\">" + notice + "</p>");
+            if ("loaned".equals(message)) notice = "貸出しました。";
+            else if ("reserved".equals(message)) notice = "予約しました。";
+            else if ("alreadyReserved".equals(message)) notice = "この利用者はすでに予約しています。";
+            else if ("reservationOrder".equals(message)) notice = "予約日時が最も新しい利用者のみ貸出できます。";
+            else if ("loanInvalid".equals(message)) notice = "ISBNと氏名を確認してください。";
+            else if ("notFound".equals(message)) notice = "該当するISBNの書籍がありません。";
+            else if ("userNotFound".equals(message)) notice = "該当する氏名の利用者がありません。";
+            else if ("error".equals(message)) notice = "処理に失敗しました。入力内容とデータベースを確認してください。";
+            boolean success = "added".equals(message) || "loaned".equals(message) || "reserved".equals(message);
+            out.println("<p class=\"notice " + (success ? "" : "error") + "\" role=\"status\">" + notice + "</p>");
         }
-        out.println("<div class=\"toolbar\"><p class=\"summary\">登録書籍 " + books.size() + " 冊</p><button class=\"button\" type=\"button\" id=\"open-registration\">登録</button></div>");
+        out.println("<div class=\"toolbar\"><p class=\"summary\">登録書籍 " + books.size() + " 冊</p><div><button class=\"button\" type=\"button\" id=\"open-loan\">貸出/予約</button> <button class=\"button\" type=\"button\" id=\"open-registration\">登録</button></div></div>");
         if (books.isEmpty()) out.println("<div class=\"table-wrap no-books\">表示できる書籍がありません。</div>");
         else {
             out.println("<div class=\"table-wrap\"><table><thead><tr><th>タイトル</th><th>巻</th><th>著者</th><th>貸出中のユーザ</th><th>予約人数</th></tr></thead><tbody>");
@@ -150,11 +270,14 @@ public class LibraryStatusServlet extends HttpServlet {
             out.println("</tbody></table></div>");
         }
         out.println("</main><footer>貸出中は返却日時が未登録の貸出記録、予約人数は未貸出の予約件数を表示しています。</footer>");
+        out.println("<div class=\"modal\" id=\"loan-modal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"loan-title\"><section class=\"dialog\"><h2 id=\"loan-title\">貸出/予約</h2>");
+        out.println("<form method=\"post\" action=\"" + escapeHtml(getServletContext().getContextPath()) + "/books\"><input type=\"hidden\" name=\"action\" value=\"loan\"><div class=\"field\"><label for=\"loan-isbn\">ISBN</label><input id=\"loan-isbn\" name=\"isbn\" type=\"text\" required maxlength=\"17\" pattern=\"[0-9Xx-]{10,17}\" placeholder=\"9784000000000\"></div>");
+        out.println("<div class=\"field\"><label for=\"full-name\">氏名</label><input id=\"full-name\" name=\"fullName\" type=\"text\" required maxlength=\"200\"></div><div class=\"actions\"><button class=\"button cancel\" type=\"button\" id=\"close-loan\">キャンセル</button><button class=\"button\" type=\"submit\">決定</button></div></form></section></div>");
         out.println("<div class=\"modal\" id=\"registration-modal\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"registration-title\"><section class=\"dialog\"><h2 id=\"registration-title\">書籍を登録</h2>");
         out.println("<form method=\"post\" action=\"" + escapeHtml(getServletContext().getContextPath()) + "/books\"><div class=\"field\"><label for=\"isbn\">ISBN</label><input id=\"isbn\" name=\"isbn\" type=\"text\" required maxlength=\"17\" pattern=\"[0-9Xx-]{10,17}\" placeholder=\"9784000000000\"></div>");
         out.println("<div class=\"field\"><label for=\"title\">タイトル</label><input id=\"title\" name=\"title\" type=\"text\" required maxlength=\"500\"></div><div class=\"field\"><label for=\"volume\">巻</label><input id=\"volume\" name=\"volume\" type=\"number\" min=\"0\"></div>");
         out.println("<div class=\"field\"><label for=\"author\">著者</label><input id=\"author\" name=\"author\" type=\"text\" required maxlength=\"500\"></div><div class=\"actions\"><button class=\"button cancel\" type=\"button\" id=\"close-registration\">キャンセル</button><button class=\"button\" type=\"submit\">決定</button></div></form></section></div>");
-        out.println("<script>(function(){var modal=document.getElementById('registration-modal');function open(){modal.classList.add('open');document.body.classList.add('modal-open');document.getElementById('isbn').focus()}function close(){modal.classList.remove('open');document.body.classList.remove('modal-open')}document.getElementById('open-registration').addEventListener('click',open);document.getElementById('close-registration').addEventListener('click',close);modal.addEventListener('click',function(e){if(e.target===modal)close()});document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});if(new URLSearchParams(location.search).has('message')&&new URLSearchParams(location.search).get('message')!=='added')open()})();</script></body></html>");
+        out.println("<script>(function(){function setup(id,openId,closeId,inputId){var modal=document.getElementById(id);function open(){modal.classList.add('open');document.body.classList.add('modal-open');document.getElementById(inputId).focus()}function close(){modal.classList.remove('open');document.body.classList.remove('modal-open')}document.getElementById(openId).addEventListener('click',open);document.getElementById(closeId).addEventListener('click',close);modal.addEventListener('click',function(e){if(e.target===modal)close()});document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});return open}setup('loan-modal','open-loan','close-loan','loan-isbn');setup('registration-modal','open-registration','close-registration','isbn');var message=new URLSearchParams(location.search).get('message');if(message&&message!=='added'&&['duplicate','invalid'].indexOf(message)>=0)document.getElementById('registration-modal').classList.add('open')})();</script></body></html>");
     }
 
     private String escapeHtml(String value) {
